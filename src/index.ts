@@ -1,27 +1,24 @@
-import { Client, GatewayIntentBits, Events, Message } from 'discord.js';
+import { Client, GatewayIntentBits, Events, Message, Collection } from 'discord.js';
 import { config } from './config'; // Or directly use process.env if not using config.ts
+import commandsCollection from './commands'; // Import commands collection
+import { registerEvents } from './events';
 
 // Create a new Client instance
 const client = new Client({
     intents: [
       GatewayIntentBits.Guilds,          // Required for basic server functionality
-      GatewayIntentBits.GuildMessages,   // Required to receive messages in guilds
+      //GatewayIntentBits.GuildMessages,   // Required to receive messages in guilds
       GatewayIntentBits.GuildVoiceStates, // Required to manage voice states
       GatewayIntentBits.MessageContent,  // Required to read message content (PRIVILEGED INTENT!)
       // Add other intents your bot needs, e.g., GatewayIntentBits.GuildMembers
     ],
-  });
-
-  // When the client is ready, run this code (only once)
-client.once(Events.ClientReady, c => {
-    console.log(`Ready! Logged in as ${c.user.tag}`);
-    console.log(`🤖 Lafayette is serving ${client.guilds.cache.size} guilds.`);
-    // You can set the bot's presence here
-    client.user?.setPresence({
-        activities: [{ name: 'your commands | /help' }], // Example activity
-        status: 'online', // online, idle, dnd, invisible
-    });
 });
+
+// --- Assign Commands to Client ---
+client.commands = commandsCollection; // Assign the pre-populated collection
+
+// --- Register Events Manually ---
+registerEvents(client); // Call the function to attach all imported events
 
 // Log in to Discord with your client's token
 client.login(config.DISCORD_TOKEN) // Or process.env.DISCORD_TOKEN
