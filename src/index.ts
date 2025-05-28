@@ -1,7 +1,8 @@
 import { Client, GatewayIntentBits, Events, Message, Collection } from 'discord.js';
 import { config } from './config'; // Or directly use process.env if not using config.ts
 import commandsCollection from './commands'; // Import commands collection
-import { registerEvents } from './events';
+import { registerEvents, registerPlayer } from './events';
+import { Player } from 'discord-player';
 
 // Create a new Client instance
 const client = new Client({
@@ -17,8 +18,27 @@ const client = new Client({
 // --- Assign Commands to Client ---
 client.commands = commandsCollection; // Assign the pre-populated collection
 
+// --- Initialize Discord Player ---
+const player = new Player(client);
+
+registerPlayer(player).then(result => {
+  if (result.success) {
+    console.log('[PLAYER] Discord Player initialized successfully.');
+    registerEvents(client, player);
+
+  } else {
+    console.error('[PLAYER] Failed to initialize Discord Player:', result.error);
+  }
+}).catch(error => {
+  console.error('[PLAYER] Error during Discord Player initialization:', error);
+});
+
 // --- Register Events Manually ---
-registerEvents(client); // Call the function to attach all imported events
+ // Call the function to attach all imported events
+
+
+
+
 
 // Log in to Discord with your client's token
 client.login(config.DISCORD_TOKEN) // Or process.env.DISCORD_TOKEN

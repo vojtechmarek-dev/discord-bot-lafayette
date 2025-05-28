@@ -1,10 +1,12 @@
 import { Collection } from "discord.js";
 import { Command } from "../types";
 import { pingCommand } from "./utility";
+import { playCommand } from "./music";
 
 // Create an array of all command objects
 const allCommands: Command[] = [
-    pingCommand
+    pingCommand,
+    playCommand
 ];
 
 

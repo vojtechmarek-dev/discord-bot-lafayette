@@ -7,6 +7,7 @@
     "build": "esbuild src/index.ts --bundle --outfile=dist/index.js --platform=node --format=cjs --minify --sourcemap",
     "start": "node dist/index.js",
     "dev": "tsx watch src/index.ts",
+    "debug": "tsx --inspect src/index.ts",
     "deploy": "tsx deploy-commands.ts",
     "typecheck": "tsc --noEmit",
     "lint": "eslint . --ext .ts",
@@ -15,8 +16,15 @@
   "author": "Vojtěch Marek",
   "license": "MIT",
   "dependencies": {
+    "@discord-player/extractor": "^7.1.0",
+    "discord-player": "^7.1.0",
+    "discord-player-youtubei": "^1.4.6",
     "discord.js": "^14.19.3",
-    "dotenv": "^16.5.0"
+    "dotenv": "^16.5.0",
+    "ffmpeg-static": "^5.2.0",
+    "mediaplex": "^1.0.0",
+    "opusscript": "^0.0.8",
+    "sodium-native": "^5.0.4"
   },
   "devDependencies": {
     "@eslint/js": "^9.27.0",
