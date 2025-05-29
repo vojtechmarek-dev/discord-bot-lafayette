@@ -3,6 +3,7 @@ import { config } from './config'; // Or directly use process.env if not using c
 import commandsCollection from './commands'; // Import commands collection
 import { initPlayer, registerExtractors } from './utils/helpers/discordPlayer';
 import { registerEvents } from './events';
+import { ExtendedClient } from './types';
 
 // Create a new Client instance
 const client = new Client({
@@ -25,8 +26,9 @@ client.commands = commandsCollection; // Assign the pre-populated collection
     await registerExtractors(player);
     registerEvents(client, player);
 
+    clientLogin(client);
 })().catch(error => {
-    console.error('[PLAYER] Error initializing Discord Player:', error);
+    console.error('[SETUP] Error initializing Lafayette:', error);
 });
 
 
@@ -35,18 +37,20 @@ client.commands = commandsCollection; // Assign the pre-populated collection
  // Call the function to attach all imported events
 
 // Log in to Discord with your client's token
-client.login(config.DISCORD_TOKEN) // Or process.env.DISCORD_TOKEN
-  .then(() => {
-    console.log('Login successful!');
-  })
-  .catch(error => {
-    console.error('Failed to login:', error);
-    process.exit(1); // Exit if login fails
-  });
+function clientLogin(client: ExtendedClient) {
+    client.login(config.DISCORD_TOKEN) // Or process.env.DISCORD_TOKEN
+        .then(() => {
+            console.log('Login successful!');
+        })
+        .catch(error => {
+            console.error('Failed to login:', error);
+            process.exit(1); // Exit if login fails
+        });
 
-// Basic error handling
-client.on(Events.Error, console.error);
-client.on(Events.Warn, console.warn);
+    // Basic error handling
+    client.on(Events.Error, console.error);
+    client.on(Events.Warn, console.warn);
+} 
 
 // Optional: Graceful shutdown
 process.on('SIGINT', () => {
