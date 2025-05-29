@@ -47,62 +47,61 @@ export const playCommand: Command = {
     await interaction.deferReply();
 
     try {
-      //const searchResult = await player.search(query, {
-      //  requestedBy: interaction.user,
-      //  searchEngine: QueryType.AUTO
-      //});
-//
-      //if (!searchResult || !searchResult.hasTracks()) {
-      //  await interaction.editReply({ content: `❌ No tracks found for "${query}"!` });
-      //  return;
-      //}
-//
-      //// Metadata to pass to the queue - for sending messages from player events
-      //const metadata: PlayerQueueMetadata = {
-      //    channel: interaction.channel ?? undefined, // Store the channel where command was run
-      //    interaction: interaction // Optionally store interaction for more complex scenarios
-      //};
+        const searchResult = await player.search(query, {
+          requestedBy: interaction.user,
+        });
+
+        if (!searchResult || !searchResult.hasTracks()) {
+          await interaction.editReply({ content: `❌ No tracks found for "${query}"!` });
+          return;
+        }
+
+        // Metadata to pass to the queue - for sending messages from player events
+        const metadata: PlayerQueueMetadata = {
+            channel: interaction.channel ?? undefined, // Store the channel where command was run
+            interaction: interaction // Optionally store interaction for more complex scenarios
+        };
 
       // Play the track or add to queue
       // The `play` method handles joining the voice channel
       const { track } = await player.play(voiceChannel, query, {
         nodeOptions: { // Options for the GuildQueuePlayerNode
           metadata: interaction,
-          //volume: 50, // Default volume (0-100)
-          //leaveOnEmpty: true,
-          //leaveOnEmptyCooldown: 30000, // 30 seconds
-          //leaveOnEnd: true,
-          //leaveOnEndCooldown: 30000, // 30 seconds
-          //selfDeaf: false,
+          volume: 50, // Default volume (0-100)
+          leaveOnEmpty: true,
+          leaveOnEmptyCooldown: 30000, // 30 seconds
+          leaveOnEnd: true,
+          leaveOnEndCooldown: 30000, // 30 seconds
+          selfDeaf: false,
         },
       });
       await interaction.editReply({ content: `▶️ Playing **${track.cleanTitle}**!`});
 
       // discord-player's events ('playerStart', 'audioTrackAdd') will handle responses.
       // You might want to send a confirmation if it's a playlist.
-      //if (searchResult.playlist) {
-      //    await interaction.editReply({
-      //        content: `🎶 Playlist **${searchResult.playlist.title}** (${searchResult.tracks.length} songs) added to the queue!`,
-      //    });
-      //} else if (searchResult.tracks.length > 0) {
-      //    // If it's a single track and the queue was empty, 'playerStart' will fire.
-      //    // If adding to an existing queue, 'audioTrackAdd' will fire.
-      //    // So, a simple confirmation here might be good if not the first song.
-      //    const queue = player.nodes.get(interaction.guildId);
-      //    if (queue && queue.tracks.size > 0 && !queue.currentTrack) { // If tracks were added but not playing yet
-      //      await interaction.editReply({ content: `🎵 **${searchResult.tracks[0].title}** added to the queue!`});
-      //    } else if (queue && queue.currentTrack && searchResult.tracks[0].url !== queue.currentTrack.url) {
-      //      // If something is playing and we added a new different song
-      //      await interaction.editReply({ content: `🎵 **${searchResult.tracks[0].title}** added to the queue!`});
-      //    } else if (queue && queue.currentTrack && searchResult.tracks[0].url === queue.currentTrack.url) {
-      //      // First song, playerStart will handle message. Edit reply to acknowledge.
-      //      await interaction.editReply({ content: `▶️ Playing **${searchResult.tracks[0].title}**!`});
-      //    } else {
-      //      // Fallback or if it's the very first song, playerStart will handle it.
-      //      // To avoid "Thinking..." if playerStart is slightly delayed:
-      //      await interaction.editReply({ content: `🔍 Processing your request for **${searchResult.tracks[0].title}**...` });
-      //    }
-      //}
+      if (searchResult.playlist) {
+          await interaction.editReply({
+              content: `🎶 Playlist **${searchResult.playlist.title}** (${searchResult.tracks.length} songs) added to the queue!`,
+          });
+      } else if (searchResult.tracks.length > 0) {
+          // If it's a single track and the queue was empty, 'playerStart' will fire.
+          // If adding to an existing queue, 'audioTrackAdd' will fire.
+          // So, a simple confirmation here might be good if not the first song.
+          const queue = player.nodes.get(interaction.guildId);
+          if (queue && queue.tracks.size > 0 && !queue.currentTrack) { // If tracks were added but not playing yet
+            await interaction.editReply({ content: `🎵 **${searchResult.tracks[0].title}** added to the queue!`});
+          } else if (queue && queue.currentTrack && searchResult.tracks[0].url !== queue.currentTrack.url) {
+            // If something is playing and we added a new different song
+            await interaction.editReply({ content: `🎵 **${searchResult.tracks[0].title}** added to the queue!`});
+          } else if (queue && queue.currentTrack && searchResult.tracks[0].url === queue.currentTrack.url) {
+            // First song, playerStart will handle message. Edit reply to acknowledge.
+            await interaction.editReply({ content: `▶️ Playing **${searchResult.tracks[0].title}**!`});
+          } else {
+            // Fallback or if it's the very first song, playerStart will handle it.
+            // To avoid "Thinking..." if playerStart is slightly delayed:
+            await interaction.editReply({ content: `🔍 Processing your request for **${searchResult.tracks[0].title}**...` });
+          }
+      }
 
     } catch (error: any) {
       console.error('Error in /play command:', error);
