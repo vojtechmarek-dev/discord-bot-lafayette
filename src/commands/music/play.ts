@@ -1,6 +1,6 @@
 // src/commands/music/play.ts
 import { SlashCommandBuilder, ChatInputCommandInteraction, GuildMember, EmbedBuilder, ChannelType } from 'discord.js';
-import { QueryType, useMainPlayer } from 'discord-player'; // Import from discord-player
+import { QueryResolver, QueryType, useMainPlayer } from 'discord-player'; // Import from discord-player
 import { Command, ExtendedClient, PlayerQueueMetadata } from '../../types'; // Use your PlayerQueueMetadata if defined
 
 export const playCommand: Command = {
@@ -47,12 +47,14 @@ export const playCommand: Command = {
     await interaction.deferReply();
 
     try {
+
         const searchResult = await player.search(query, {
-          requestedBy: interaction.user,
+            requestedBy: interaction.user,
+            searchEngine: QueryType.AUTO, 
         });
 
         if (!searchResult || !searchResult.hasTracks()) {
-          await interaction.editReply({ content: `❌ No tracks found for "${query}"!` });
+          await interaction.editReply({ content: `❌ No tracks found for "${query}!` });
           return;
         }
 

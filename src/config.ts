@@ -2,7 +2,7 @@ import dotenv from 'dotenv';
 
 dotenv.config();
 
-const { DISCORD_TOKEN, CLIENT_ID, GUILD_ID } = process.env;
+const { DISCORD_TOKEN, CLIENT_ID, GUILD_ID, YT_CREDENTIALS } = process.env;
 
 if (!DISCORD_TOKEN || !CLIENT_ID) { // GUILD_ID is optional but recommended for dev
   throw new Error("Missing environment variables: DISCORD_TOKEN or CLIENT_ID are required.");
@@ -15,5 +15,6 @@ if (!GUILD_ID) {
 export const config = {
   DISCORD_TOKEN,
   CLIENT_ID,
-  GUILD_ID
+  GUILD_ID,
+  YT_CREDENTIALS
 };
