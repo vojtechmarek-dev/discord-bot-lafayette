@@ -6,6 +6,8 @@ import { interactionCreateEvent } from './interactionCreate';
 import { Player } from 'discord-player';
 import { DefaultExtractors } from '@discord-player/extractor';
 import { YoutubeiExtractor } from 'discord-player-youtubei';
+import { BotEvent } from '../types';
+import { SpotifyExtractor } from 'discord-player-spotify';
 
 //import { event as interactionCreateEvent } from './interactionCreate';
 // ... import other event handlers as you create them (e.g., messageCreate, guildMemberAdd)
@@ -13,7 +15,7 @@ import { YoutubeiExtractor } from 'discord-player-youtubei';
 // Define a structure for your event modules if you haven't already
 // (This was implied by the previous dynamic loader)
 
-const allEvents: any[] = [
+const allEvents: BotEvent[] = [
   readyEvent,
   interactionCreateEvent,
   // ... add other imported event objects here
@@ -47,6 +49,13 @@ export function registerEvents(client: Client, player: Player): void {
 }
 
 export async function registerPlayer(player: Player): Promise<{ success: boolean; error: null; }> {
-  await player.extractors.register(YoutubeiExtractor, {});
+  await player.extractors.register(YoutubeiExtractor, {
+    generateWithPoToken: true,
+    streamOptions: {
+    useClient: "WEB"
+  }});
+
+  await player.extractors.register(SpotifyExtractor, {});
+
   return await player.extractors.loadMulti(DefaultExtractors);
 }

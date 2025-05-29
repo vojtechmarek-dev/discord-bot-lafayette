@@ -15,6 +15,13 @@ export interface Command {
   execute: (interaction: ChatInputCommandInteraction, client: ExtendedClient) => Promise<void>;
 }
 
+export interface BotEvent {
+    name: string; // The name of the discord.js event (e.g., Events.ClientReady)
+    once?: boolean; // Whether the event should only run once
+    execute: (...args: any[]) => void | Promise<void>; // The function to execute
+}
+  
+
 // Extend the discord.js Client type for your commands, but not for discord-player's queue
 export interface ExtendedClient extends Client {
   commands: Collection<string, Command>;

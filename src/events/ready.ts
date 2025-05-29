@@ -1,6 +1,7 @@
 import { Events, Client } from 'discord.js';
+import { BotEvent } from '../types';
 
-export const readyEvent = { // This is our BotEvent structure
+export const readyEvent: BotEvent = { // This is our BotEvent structure
   name: Events.ClientReady,
   once: true,
   execute(client: Client) { // Client is now the first (and only in this case) arg passed from the loop

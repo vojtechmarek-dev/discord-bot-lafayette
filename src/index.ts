@@ -24,13 +24,16 @@ const player = new Player(client);
 registerPlayer(player).then(result => {
   if (result.success) {
     console.log('[PLAYER] Discord Player initialized successfully.');
-    registerEvents(client, player);
 
   } else {
     console.error('[PLAYER] Failed to initialize Discord Player:', result.error);
   }
+  
+  registerEvents(client, player);
+
 }).catch(error => {
-  console.error('[PLAYER] Error during Discord Player initialization:', error);
+  console.error('[PLAYER] Error during Discord Player initialization music functionality will not be availiable:', error);    
+  registerEvents(client, player);
 });
 
 // --- Register Events Manually ---
