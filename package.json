@@ -4,7 +4,7 @@
   "description": "Internal discord bot for DnD purposes - playing music, rolling dice, drawing cards",
   "main": "index.js",
   "scripts": {
-    "build": "esbuild src/index.ts --bundle --outfile=dist/index.js --platform=node --format=cjs --minify --sourcemap",
+    "build": "esbuild src/index.ts --bundle --outfile=dist/index.js --platform=node --external:jsdom --format=cjs --minify --sourcemap",
     "start": "node dist/index.js",
     "dev": "tsx watch src/index.ts",
     "debug": "tsx --inspect src/index.ts",
