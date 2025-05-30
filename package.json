@@ -16,6 +16,7 @@
   "author": "Vojtěch Marek",
   "license": "MIT",
   "dependencies": {
+    "@dice-roller/rpg-dice-roller": "^5.5.1",
     "@discord-player/extractor": "^7.1.0",
     "discord-player": "^7.1.0",
     "discord-player-soundcloud": "^1.0.7",
