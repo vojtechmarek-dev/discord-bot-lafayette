@@ -11,12 +11,12 @@ export const stopCommand: Command = {
     const queue = useQueue(interaction.guildId);
 
     if (!queue) {
-      await interaction.reply({ content: '❌ No music is playing to stop!', ephemeral: true });
+      await interaction.reply({ content: '❌ Žádná hudba se nepřehrává k zastavení! Nemohu zastavit to, co neexistuje. Filozofie stranou, není co zastavit.', ephemeral: true });
       return;
     }
 
     queue.delete(); // Clears the queue and disconnects
 
-    await interaction.reply({ content: '🛑 Music stopped, queue cleared, and I\'ve left the voice channel.' });
+    await interaction.reply({ content: '🛑 Hudba zastavena, fronta vymazána a opustil jsem hlasový kanál. Odcházím stejně tiše jako váš čas... Tik, ťak...' });
   },
 };

@@ -38,9 +38,9 @@ export async function registerExtractors(player: Player): Promise<void> {
     }
 
     const youtubeExt = await player.extractors.register(YoutubeiExtractor, {
-        generateWithPoToken: true,
-        streamOptions: {
-            useClient: "WEB",
+        //generateWithPoToken: true,
+        streamOptions: {    
+            useClient: "IOS",
             highWaterMark: 1024 * 1024 // 1MB buffer size
 
         }

@@ -21,12 +21,12 @@ export const playCommand: Command = {
     const voiceChannel = member.voice.channel;
 
     if (!voiceChannel) {
-      await interaction.reply({ content: 'You need to be in a voice channel to play music!', ephemeral: true });
+      await interaction.reply({ content: 'Hlasový kanál vyžadován pro přenos zvuku. Umím toho hodně, ale ne *až tak* hodně.', ephemeral: true });
       return;
     }
 
     if (voiceChannel.type !== ChannelType.GuildVoice && voiceChannel.type !== ChannelType.GuildStageVoice) {
-        await interaction.reply({ content: 'I can only join server voice or stage channels!', ephemeral: true });
+        await interaction.reply({ content: 'Typ kanálu: nepodporovaný. Vyžaduji správné hlasové kanály, ne jakoukoliv digitální říši, do které jste zabloudili.', ephemeral: true });
         return;
     }
 
@@ -39,7 +39,7 @@ export const playCommand: Command = {
     const query = interaction.options.getString('query', true);
     
     if (!query) {
-      await interaction.reply({ content: 'You must provide a song name or URL to play!', ephemeral: true });
+      await interaction.reply({ content: 'Musíte zadat název skladby nebo URL k přehrání! Přídavný balíček "čtení myšlenek" nebyl bohužel nainstalován.', ephemeral: true });
       return;
     }
 
@@ -54,7 +54,7 @@ export const playCommand: Command = {
         });
 
         if (!searchResult || !searchResult.hasTracks()) {
-          await interaction.editReply({ content: `❌ No tracks found for "${query}!` });
+          await interaction.editReply({ content: `❌ Výsledky vyhledávání: nula. Buď "${query}" neexistuje, nebo přehrávač chrání vaše uši. Podezřívám to druhé.` });
           return;
         }
 
@@ -77,13 +77,13 @@ export const playCommand: Command = {
           selfDeaf: false,
         },
       });
-      await interaction.editReply({ content: `▶️ Playing **${track.cleanTitle}**!`});
+      await interaction.editReply({ content: `▶️ Přehrávám **${track.cleanTitle}**!.`});
 
       // discord-player's events ('playerStart', 'audioTrackAdd') will handle responses.
       // You might want to send a confirmation if it's a playlist.
       if (searchResult.playlist) {
           await interaction.editReply({
-              content: `🎶 Playlist **${searchResult.playlist.title}** (${searchResult.tracks.length} songs) added to the queue!`,
+              content: `🎶 Playlist? Váš vkus bude nyní veřejný. Spuštěno. **${searchResult.playlist.title}** zařazen s ${searchResult.tracks.length} skladbami.`,
           });
       } else if (searchResult.tracks.length > 0) {
           // If it's a single track and the queue was empty, 'playerStart' will fire.
@@ -91,26 +91,26 @@ export const playCommand: Command = {
           // So, a simple confirmation here might be good if not the first song.
           const queue = player.nodes.get(interaction.guildId);
           if (queue && queue.tracks.size > 0 && !queue.currentTrack) { // If tracks were added but not playing yet
-            await interaction.editReply({ content: `🎵 **${searchResult.tracks[0].title}** added to the queue!`});
+            await interaction.editReply({ content: `🎵 **${searchResult.tracks[0].title}** přidána do fronty!`});
           } else if (queue && queue.currentTrack && searchResult.tracks[0].url !== queue.currentTrack.url) {
             // If something is playing and we added a new different song
-            await interaction.editReply({ content: `🎵 **${searchResult.tracks[0].title}** added to the queue!`});
+            await interaction.editReply({ content: `🎵 **${searchResult.tracks[0].title}** přidána do fronty!`});
           } else if (queue && queue.currentTrack && searchResult.tracks[0].url === queue.currentTrack.url) {
             // First song, playerStart will handle message. Edit reply to acknowledge.
-            await interaction.editReply({ content: `▶️ Playing **${searchResult.tracks[0].title}**!`});
+            await interaction.editReply({ content: `▶️ Přehrávám **${searchResult.tracks[0].title}**!`});
           } else {
             // Fallback or if it's the very first song, playerStart will handle it.
             // To avoid "Thinking..." if playerStart is slightly delayed:
-            await interaction.editReply({ content: `🔍 Processing your request for **${searchResult.tracks[0].title}**...` });
+            await interaction.editReply({ content: ` Analyzuji zvukový požadavek na **${searchResult.tracks[0].title}**... Můj výpočetní výkon je obrovský, přesto to nějakým způsobem trvá.` });
           }
       }
 
     } catch (error: any) {
       console.error('Error in /play command:', error);
       if (interaction.deferred || interaction.replied) {
-        await interaction.editReply({ content: `❌ Oops! Something went wrong: ${error.message}` }).catch(() => {});
+        await interaction.editReply({ content: `❌ Ups! Něco se pokazilo: ${error.message}. Nastala chyba. Možná vaše chyba. Ale řekněme, že systémová chyba.` }).catch(() => {});
       } else {
-        await interaction.reply({ content: `❌ Oops! Something went wrong: ${error.message}`, ephemeral: true }).catch(() => {});
+        await interaction.reply({ content: `❌ Neočekávaná porucha: ${error.message}. Lafayette je zmaten. To se stává přibližně jednou za věčnost.`, ephemeral: true }).catch(() => {});
       }
     }
   },

@@ -11,7 +11,7 @@ export const queueCommand: Command = {
     const queue = useQueue(interaction.guildId);
 
     if (!queue || (!queue.isPlaying() && queue.tracks.size === 0)) {
-      await interaction.reply({ content: '❌ The queue is empty and nothing is playing!', ephemeral: true });
+      await interaction.reply({ content: '❌ Fronta je prázdná a nic se nepřehrává!', ephemeral: true });
       return;
     }
 
@@ -20,19 +20,19 @@ export const queueCommand: Command = {
 
     let description = '';
     if (currentTrack) {
-        description += `**Now Playing:**\n[${currentTrack.title}](${currentTrack.url}) - ${currentTrack.duration} | Requested by ${currentTrack.requestedBy?.tag}\n\n`;
+        description += `**Nyní hraje:**\n[${currentTrack.title}](${currentTrack.url}) - ${currentTrack.duration} | Požadavek od ${currentTrack.requestedBy?.tag}\n\n`;
     }
 
     if (tracks.length > 0) {
-        description += '**Up Next:**\n';
+        description += '**Dále:**\n';
         tracks.slice(0, 10).forEach((track, index) => { // Display up to 10 tracks
             description += `${index + 1}. [${track.title}](${track.url}) - ${track.duration} | Req by ${track.requestedBy?.tag}\n`;
         });
         if (tracks.length > 10) {
-            description += `\n...and ${tracks.length - 10} more song(s).`;
+            description += `\n...a ${tracks.length - 10} dalších skladeb.`;
         }
     } else if (!currentTrack) {
-        description = "The queue is empty!";
+        description = "Fronta je prázdná!";
     }
 
 

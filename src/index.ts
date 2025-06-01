@@ -53,14 +53,14 @@ function clientLogin(client: ExtendedClient) {
 } 
 
 // Optional: Graceful shutdown
-process.on('SIGINT', () => {
+process.on('SIGINT', async () => {
     console.log('Lafayette is shutting down...');
-    client.destroy();
+    await client.destroy();
     process.exit(0);
 });
 
-process.on('SIGTERM', () => {
+process.on('SIGTERM', async () => {
     console.log('Lafayette is shutting down...');
-    client.destroy();
+    await client.destroy();
     process.exit(0);
 });

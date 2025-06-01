@@ -11,18 +11,18 @@ export const skipCommand: Command = {
     const queue = useQueue(interaction.guildId);
 
     if (!queue || !queue.isPlaying()) {
-      await interaction.reply({ content: '❌ No music is currently playing!', ephemeral: true });
+      await interaction.reply({ content: '❌ Nic se nepřehrává!', ephemeral: true });
       return;
     }
 
     if (queue.tracks.size === 0 && !queue.currentTrack) {
-        await interaction.reply({ content: '❌ Nothing to skip (queue is empty after current song)!', ephemeral: true });
+        await interaction.reply({ content: '❌ Není co přeskočit (fronta je prázdná po současné skladbě)! Dosáhli jste konce své hudební cesty. Jak... antiklimatické.', ephemeral: true });
         return;
     }
 
     const track = queue.currentTrack;
     queue.node.skip(); // Skips the current song
 
-    await interaction.reply({ content: `⏭️ Skipped **${track?.title || 'the current song'}**!` });
+    await interaction.reply({ content: `⏭️ **${track?.title || 'Současná zvuková sekvence'}** ukončena. Některé skladby si nezaslouží klidný konec. Toto byla jedna z nich.` });
   },
 };

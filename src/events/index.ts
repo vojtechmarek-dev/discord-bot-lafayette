@@ -27,7 +27,7 @@ export function registerEvents(client: Client, player: Player | null): void {
             // we will later define queue.metadata object while creating the queue
             const metadata = queue.metadata as { channel?: any, interaction?: ChatInputCommandInteraction }; // Define a type for metadata
             if (metadata?.channel) {
-                metadata.channel.send(`▶️ Now playing: **${track.title}** by ${track.author}!`).catch(console.error);
+                metadata.channel.send(`▶️ Zvuková sekvence inicializována: **${track.title}** od ${track.author}!`).catch(console.error);
             }
         });
 

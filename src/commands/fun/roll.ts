@@ -38,25 +38,24 @@ function formatIndividualRolls(rollInstance: DiceRoll): string {
 export const rollCommand: Command = {
     data: new SlashCommandBuilder()
         .setName('roll')
-        .setDescription('Rolls dice based on standard dice notation (e.g., 2d6, 1d20+5).')
+        .setDescription('Házím kostky na základě požadavku (např., 2d6, 1d20+5). Hody můžete rozdělit pomocí ";" nebo ","')
         .addStringOption(option =>
             option.setName('dice')
-                .setDescription('The dice notation to roll (e.g., 3d10, 2d6+3, 1d100). Default: 1d6')
+                .setDescription('Požadavky na hození kostek (e.g., 3d10, 2d6+3, 1d100). Default: 1d6')
                 .setRequired(false)) as SlashCommandBuilder,
     async execute(interaction: ChatInputCommandInteraction, client: ExtendedClient) {
         const user = interaction.user;
         const diceNotationInput = interaction.options.getString('dice') || '1d6';
 
-        // todo for future add split on ";" or "," " " to allow multiple rolls in one command
 
         try {
             const notationsToRoll = diceNotationInput
-                .split(/[,;]/) // <--- MODIFIED LINE
+                .split(/[,;]/)
                 .map(s => s.trim())
                 .filter(s => s.length > 0);
 
             if (notationsToRoll.length > 5) { // Limit number of multiple rolls
-                await interaction.reply({ content: 'You can request a maximum of 5 rolls sets of dice at once.', ephemeral: true });
+                await interaction.reply({ content: 'Zadrž kovboji! Můžete požádat pouze o 5 sad házení! Vypadám snad, že těch kostek mám nekonečno?.', ephemeral: true });
                 return;
             }
 
@@ -67,7 +66,7 @@ export const rollCommand: Command = {
                 const roll = new DiceRoll(diceNotation);
                 const individualRolledDiceFormatted = formatIndividualRolls(roll);
 
-                resultString += `Request: \`[${roll.notation}]\` Result: **${roll.total}**\n`;
+                resultString += `Požadavek: \`[${roll.notation}]\` Výsledek: **${roll.total}**\n`;
                 rollsString += `${individualRolledDiceFormatted}\n`
                 totalsString += `**${roll.total}**\n`
             }
@@ -82,8 +81,8 @@ export const rollCommand: Command = {
                 .setTitle(`${user.displayName} Rolls`)
                 .setDescription(resultString)
                 .setFields(
-                    { name: 'Rolls', value: rollsString, inline: true },
-                    { name: 'Result', value: totalsString, inline: true }
+                    { name: 'Hod', value: rollsString, inline: true },
+                    { name: 'Výsledek', value: totalsString, inline: true }
                 )
             //.setFooter({ text: `Rolled by ${user.tag}` });
 
@@ -94,14 +93,14 @@ export const rollCommand: Command = {
 
         } catch (error: any) {
             console.error(`Error during dice roll with input "${diceNotationInput}":`, error);
-            let errorMessage = `Oops! I had trouble with "${diceNotationInput}".`;
+            let errorMessage = `Ups! S tímhle zápisem "${diceNotationInput}" mám problém.`;
             if (error.message) {
                 if (error.message.toLowerCase().includes('invalid notation') ||
                     error.message.toLowerCase().includes('unexpected') ||
                     error.message.toLowerCase().includes('expected')) {
-                    errorMessage = `"${diceNotationInput}" doesn't look like valid dice notation. Try "2d6", "1d20+5", etc.`;
+                    errorMessage = `"${diceNotationInput}" nevypadá jako platný zápis kostek. Moje algoritmy navrhují něco jako "2d6" nebo "1d20+5" ...víte, ten druh, který dává matematický smysl.`;
                 } else {
-                    errorMessage = `Error rolling dice: ${error.message}`;
+                    errorMessage = `Chyba házení kostek: ${error.message}`;
                 }
             }
             await interaction.reply({ content: errorMessage, ephemeral: true });
