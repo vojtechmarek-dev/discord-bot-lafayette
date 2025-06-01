@@ -78,8 +78,8 @@ jobs:
       # Pass secrets needed by deploy-commands.ts as environment variables
       # These secrets must be configured in your GitHub repository settings
       # (Settings > Secrets and variables > Actions > New repository secret)
-      DISCORD_TOKEN: ${{ secrets.DISCORD_BOT_TOKEN }} # Ensure secret name matches
-      CLIENT_ID: ${{ secrets.DISCORD_CLIENT_ID }}   # Ensure secret name matches
+      DISCORD_TOKEN: ${{ secrets.DISCORD_TOKEN }} # Ensure secret name matches
+      CLIENT_ID: ${{ secrets.CLIENT_ID }}   # Ensure secret name matches
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
