@@ -31,6 +31,12 @@ export function registerEvents(client: Client, player: Player | null): void {
             }
         });
 
+        player.events.on('error', (queue, error) => {
+            // Emitted when the player queue encounters error
+            console.log(`General player error event: ${error.message}`);
+            console.log(error);
+        });
+
         player.events.on('playerError', (queue, error) => {
             console.error(`[${queue.guild.name}] Player error:`, error);
             const metadata = queue.metadata as { channel?: any };

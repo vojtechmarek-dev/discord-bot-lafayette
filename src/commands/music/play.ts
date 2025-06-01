@@ -66,7 +66,7 @@ export const playCommand: Command = {
 
       // Play the track or add to queue
       // The `play` method handles joining the voice channel
-      const { track } = await player.play(voiceChannel, query, {
+      const { track } = await player.play(voiceChannel, searchResult, {
         nodeOptions: { // Options for the GuildQueuePlayerNode
           metadata: interaction,
           volume: 50, // Default volume (0-100)

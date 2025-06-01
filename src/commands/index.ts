@@ -2,6 +2,7 @@ import { Collection } from "discord.js";
 import { Command } from "../types";
 import { pingCommand } from "./utility";
 import { playCommand, queueCommand, skipCommand, stopCommand } from "./music";
+import { rollCommand } from "./fun";
 
 // Create an array of all command objects
 const allCommands: Command[] = [
@@ -9,7 +10,8 @@ const allCommands: Command[] = [
     playCommand,
     skipCommand,
     stopCommand,
-    queueCommand
+    queueCommand,
+    rollCommand
 ];
 
 

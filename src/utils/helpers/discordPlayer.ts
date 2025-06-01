@@ -4,6 +4,7 @@ import { SoundcloudExtractor } from "discord-player-soundcloud";
 import { YoutubeiExtractor } from "discord-player-youtubei";
 import { SpotifyExtractor } from "discord-player-spotify";
 import { config } from "../../config";
+import { DefaultExtractors, VimeoExtractor } from "@discord-player/extractor";
 
 /**
  * Initializes a new Player instance
@@ -13,12 +14,12 @@ import { config } from "../../config";
  */
 export async function initPlayer(client: ExtendedClient): Promise<Player> {
     return new Player(client, {
-        //skipFFmpeg: discordPlayerConfig?.skipFFmpeg,
-        //ffmpegPath: discordPlayerConfig?.ffmpegPath,
+        ffmpegPath: config.DP_FFMPEG_PATH,
     });
 }
 
 export async function registerExtractors(player: Player): Promise<void> {
+
     const soundcloudExt = await player.extractors.register(SoundcloudExtractor,{});
     if (!soundcloudExt) {
         console.error("[EXTRACTORS] Failed to register Soundcloud Extractor.");
@@ -29,6 +30,7 @@ export async function registerExtractors(player: Player): Promise<void> {
 
 
     const spotifyExt =  await player.extractors.register(SpotifyExtractor, {});
+
     if (!spotifyExt) {
         console.error("[EXTRACTORS] Failed to register Spotify Extractor.");
     } else {
@@ -39,8 +41,9 @@ export async function registerExtractors(player: Player): Promise<void> {
         generateWithPoToken: true,
         streamOptions: {
             useClient: "WEB",
-        },
-        authentication: config.YT_CREDENTIALS, // Ensure you have a valid cookie set in your config
+            highWaterMark: 1024 * 1024 // 1MB buffer size
+
+        }
     });
     
     if (!youtubeExt) {
@@ -48,4 +51,5 @@ export async function registerExtractors(player: Player): Promise<void> {
     } else {
         console.log("[EXTRACTORS] Youtube Extractor registered successfully.");
     }
+
 }
