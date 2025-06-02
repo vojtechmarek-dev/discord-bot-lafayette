@@ -5,7 +5,7 @@ import { Command, ExtendedClient } from '../../types';
 export const skipCommand: Command = {
   data: new SlashCommandBuilder()
     .setName('skip')
-    .setDescription('Skips the current song.'),
+    .setDescription('Přeskočí přehrávanou skladbu.'),
   async execute(interaction: ChatInputCommandInteraction, client: ExtendedClient) {
     if (!interaction.guildId) return;
     const queue = useQueue(interaction.guildId);

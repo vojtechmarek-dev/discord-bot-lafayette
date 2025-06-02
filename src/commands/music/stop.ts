@@ -5,7 +5,7 @@ import { Command, ExtendedClient } from '../../types';
 export const stopCommand: Command = {
   data: new SlashCommandBuilder()
     .setName('stop')
-    .setDescription('Stops the music, clears the queue, and leaves the voice channel.'),
+    .setDescription('Zastaví hudbu, vymaže frontu, a opustí hlasový kanál.'),
   async execute(interaction: ChatInputCommandInteraction, client: ExtendedClient) {
     if (!interaction.guildId) return;
     const queue = useQueue(interaction.guildId);

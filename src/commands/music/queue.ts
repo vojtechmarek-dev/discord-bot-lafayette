@@ -5,7 +5,7 @@ import { Command, ExtendedClient } from '../../types';
 export const queueCommand: Command = {
   data: new SlashCommandBuilder()
     .setName('queue')
-    .setDescription('Displays the current music queue.'),
+    .setDescription('Zobrazí aktuální hudební frontu.'),
   async execute(interaction: ChatInputCommandInteraction, client: ExtendedClient) {
     if (!interaction.guildId) return;
     const queue = useQueue(interaction.guildId);

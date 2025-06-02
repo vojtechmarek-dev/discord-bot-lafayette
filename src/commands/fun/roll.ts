@@ -66,7 +66,7 @@ export const rollCommand: Command = {
                 const roll = new DiceRoll(diceNotation);
                 const individualRolledDiceFormatted = formatIndividualRolls(roll);
 
-                resultString += `Požadavek: \`[${roll.notation}]\` Výsledek: **${roll.total}**\n`;
+                resultString += `Požadavek: \`[${roll.notation}]\`\n`;
                 rollsString += `${individualRolledDiceFormatted}\n`
                 totalsString += `**${roll.total}**\n`
             }
@@ -78,10 +78,10 @@ export const rollCommand: Command = {
 
             const embed = new EmbedBuilder()
                 //.setColor(embedColor)
-                .setTitle(`${user.displayName} Rolls`)
+                .setTitle(`${user.displayName} hodil`)
                 .setDescription(resultString)
                 .setFields(
-                    { name: 'Hod', value: rollsString, inline: true },
+                    { name: 'Hody', value: rollsString, inline: true },
                     { name: 'Výsledek', value: totalsString, inline: true }
                 )
             //.setFooter({ text: `Rolled by ${user.tag}` });

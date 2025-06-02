@@ -6,10 +6,10 @@ import { Command, ExtendedClient, PlayerQueueMetadata } from '../../types'; // U
 export const playCommand: Command = {
   data: new SlashCommandBuilder()
     .setName('play')
-    .setDescription('Plays a song or playlist from YouTube, Spotify, etc.')
+    .setDescription('Přehraje skladbu nebo playlist z YouTube, Spotify, Soundcloud')
     .addStringOption(option =>
       option.setName('query')
-        .setDescription('The song name or URL')
+        .setDescription('Název nebo přímý URL odkaz')
         .setRequired(true)) as SlashCommandBuilder,
   async execute(interaction: ChatInputCommandInteraction, client: ExtendedClient) {
     if (!interaction.guildId) {
