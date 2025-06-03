@@ -9,6 +9,8 @@ services:
       - DISCORD_TOKEN=${DISCORD_TOKEN}
       - CLIENT_ID=${CLIENT_ID}
       - GUILD_ID=${GUILD_ID}
+    volumes:
+      - ./bot_data:/usr/src/app/data  # bot_data - persistent storage for bot data
       # Add any other environment variables your bot needs
       # - SOME_API_KEY=${SOME_API_KEY}
       # - DATABASE_URL=${DATABASE_URL}

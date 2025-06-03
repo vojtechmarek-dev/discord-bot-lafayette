@@ -2,6 +2,7 @@ import { Client, GatewayIntentBits, Events, Message, Collection } from 'discord.
 import { config } from './config'; // Or directly use process.env if not using config.ts
 import commandsCollection from './commands'; // Import commands collection
 import { initPlayer, registerExtractors } from './utils/helpers/discordPlayer';
+import { loadGuildSettings } from './guildSettingsManager'; // Import the loader
 import { registerEvents } from './events';
 import { ExtendedClient } from './types';
 
@@ -16,14 +17,18 @@ const client = new Client({
     ],
 });
 
-// --- Assign Commands to Client ---
-client.commands = commandsCollection; // Assign the pre-populated collection
+(async () => {    
+    // --- Load Guild Settings ---
+    await loadGuildSettings(); // Load settings before logging in or registering events fully
 
-// --- Initialize Discord Player ---
+    // --- Assign Commands to Client ---
+    client.commands = commandsCollection; // Assign the pre-populated collection
 
-(async () => {
+    // --- Initialize Discord Player ---
     const player = await initPlayer(client);
     await registerExtractors(player);
+
+    // --- Register Events Manually ---
     registerEvents(client, player);
 
     clientLogin(client);
@@ -33,7 +38,6 @@ client.commands = commandsCollection; // Assign the pre-populated collection
 
 
 
-// --- Register Events Manually ---
  // Call the function to attach all imported events
 
 // Log in to Discord with your client's token

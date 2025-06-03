@@ -2,9 +2,10 @@ import { SlashCommandBuilder, ChatInputCommandInteraction, EmbedBuilder } from '
 import { DiceRoll, Parser } from '@dice-roller/rpg-dice-roller';
 import { Command, ExtendedClient } from '../../types';
 import { FudgeDice, PercentileDice, StandardDice } from '@dice-roller/rpg-dice-roller/types/dice';
+import { getDiceExplodeSetting } from '../../guildSettingsManager';
 
 // Helper function to format individual die rolls with bolding for max values
-function formatIndividualRolls(rollInstance: DiceRoll): string {
+function formatIndividualRolls(rollInstance: DiceRoll, explodeInfoEnabled: boolean): string {
 
     const rolledDiceParts = rollInstance.rolls.filter(group => typeof group == 'object' && 'rolls' in group);
     const parsedDiceParts: (StandardDice | FudgeDice | PercentileDice )[] = Parser.parse(rollInstance.notation).filter(group => typeof group == 'object' && 'sides' in group);
@@ -18,7 +19,7 @@ function formatIndividualRolls(rollInstance: DiceRoll): string {
                 const rolledDiceValues = Array.from(rollPart.rolls.values());
                 const rolledValuesString = rolledDiceValues.map(rolledResult => {
                     // check if rolled highest possible value of the rolled die
-                    if (rolledResult.value == dice.sides) {
+                    if (explodeInfoEnabled && rolledResult.value == dice.sides) {
                         return `${rolledResult.value}!`
                     } else {
                         return rolledResult.toString();
@@ -64,8 +65,7 @@ export const rollCommand: Command = {
 
             for (const diceNotation of notationsToRoll) {
                 const roll = new DiceRoll(diceNotation);
-                const individualRolledDiceFormatted = formatIndividualRolls(roll);
-
+                const individualRolledDiceFormatted = formatIndividualRolls(roll, interaction.guildId ? getDiceExplodeSetting(interaction.guildId) : false);
                 resultString += `Požadavek: \`[${roll.notation}]\`\n`;
                 rollsString += `${individualRolledDiceFormatted}\n`
                 totalsString += `**${roll.total}**\n`

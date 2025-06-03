@@ -1,6 +1,6 @@
 import { Collection } from "discord.js";
 import { Command } from "../types";
-import { pingCommand } from "./utility";
+import { pingCommand, settingsCommand } from "./utility";
 import { playCommand, queueCommand, skipCommand, stopCommand } from "./music";
 import { rollCommand } from "./fun";
 
@@ -11,7 +11,8 @@ const allCommands: Command[] = [
     skipCommand,
     stopCommand,
     queueCommand,
-    rollCommand
+    rollCommand,
+    settingsCommand
 ];
 
 
