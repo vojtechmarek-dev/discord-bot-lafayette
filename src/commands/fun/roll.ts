@@ -1,8 +1,8 @@
-import { SlashCommandBuilder, ChatInputCommandInteraction, EmbedBuilder } from 'discord.js';
+import { SlashCommandBuilder, ChatInputCommandInteraction, EmbedBuilder, ColorResolvable } from 'discord.js';
 import { DiceRoll, Parser } from '@dice-roller/rpg-dice-roller';
 import { Command, ExtendedClient } from '../../types';
 import { FudgeDice, PercentileDice, StandardDice } from '@dice-roller/rpg-dice-roller/types/dice';
-import { getDiceExplodeSetting } from '../../guildSettingsManager';
+import { getDiceExplodeSetting, getUserRollEmbedColor } from '../../guildSettingsManager';
 
 // Helper function to format individual die rolls with bolding for max values
 function formatIndividualRolls(rollInstance: DiceRoll, explodeInfoEnabled: boolean): string {
@@ -71,14 +71,18 @@ export const rollCommand: Command = {
                 totalsString += `**${roll.total}**\n`
             }
 
+            let embedColor: ColorResolvable = '#2bff31'; // Default Discord dark theme background
 
-
+            // Get the user's preferred embed color for this guild
+            if (interaction.guildId) {
+                embedColor = getUserRollEmbedColor(interaction.guildId!, user.id);
+            }
             // feat: TODO Determine embed color based on guild member saved preference - 
             // let embedColor: `#${string}` | number = '#2bff31'; // Default Discord dark theme background
 
             const embed = new EmbedBuilder()
-                //.setColor(embedColor)
-                .setTitle(`${user.displayName} hodil`)
+                .setColor(embedColor)
+                .setTitle(`${user.displayName} hodil/a`)
                 .setDescription(resultString)
                 .setFields(
                     { name: 'Hody', value: rollsString, inline: true },

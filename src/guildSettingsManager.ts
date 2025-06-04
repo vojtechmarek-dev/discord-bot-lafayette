@@ -1,13 +1,19 @@
 // src/guildSettingsManager.ts
 import fs from 'node:fs/promises'; // Use promise-based fs for async operations
 import path from 'node:path';
-import { Guild } from 'discord.js';
+import { ColorResolvable, Guild, User } from 'discord.js';
 
 // Define the structure for a single guild's settings
 export interface GuildSettings {
     diceExplode?: boolean; // Optional: will use default if not set
-    // Add other settings here as needed
-    // exampleSetting?: string;
+    // language todo
+    userSettings?: { // New: Nested object for user-specific settings
+        [userId: string]: UserSpecificSettings;
+    };
+}
+
+export interface UserSpecificSettings {
+    rollEmbedColor?: ColorResolvable; // Store as ColorResolvable (string hex, number, or keyword)
 }
 
 // Define the structure for the entire settings file
@@ -17,8 +23,11 @@ interface AllGuildSettings {
 
 const SETTINGS_FILE_PATH = path.join(__dirname, '..', 'data', 'guild-settings.json'); // Store in a 'data' folder at project root
 const DEFAULT_DICE_EXPLODE = true; // Default setting for dice explosion
+export const DEFAULT_USER_ROLL_EMBED_COLOR: ColorResolvable = '#ffffff';
 
 let guildSettingsCache: AllGuildSettings = {};
+
+
 
 /**
  * Ensures the data directory exists.
@@ -110,6 +119,44 @@ async function setSetting<K extends keyof GuildSettings>(
     await saveGuildSettings();
 }
 
+/**
+ * Gets a specific setting for a user within a guild.
+ */
+function getUserSetting<K extends keyof UserSpecificSettings, T extends UserSpecificSettings[K]>(
+    guildId: string,
+    userId: string,
+    key: K,
+    defaultValue: NonNullable<T>
+): NonNullable<T> {
+    const guild = guildSettingsCache[guildId];
+    if (guild && guild.userSettings && guild.userSettings[userId] && typeof guild.userSettings[userId][key] !== 'undefined') {
+        return guild.userSettings[userId][key] as NonNullable<T>;
+    }
+    return defaultValue;
+}
+
+/**
+ * Sets a specific setting for a user within a guild and saves.
+ */
+async function setUserSetting<K extends keyof UserSpecificSettings>(
+    guildId: string,
+    userId: string,
+    key: K,
+    value: UserSpecificSettings[K]
+): Promise<void> {
+    if (!guildSettingsCache[guildId]) {
+        guildSettingsCache[guildId] = {};
+    }
+    if (!guildSettingsCache[guildId].userSettings) {
+        guildSettingsCache[guildId].userSettings = {};
+    }
+    if (!guildSettingsCache[guildId].userSettings![userId]) { // Use non-null assertion after check
+        guildSettingsCache[guildId].userSettings![userId] = {};
+    }
+    guildSettingsCache[guildId].userSettings![userId][key] = value;
+    await saveGuildSettings();
+}
+
 // --- Specific Setting Accessors ---
 
 export function getDiceExplodeSetting(guildId: string | Guild): boolean {
@@ -121,6 +168,21 @@ export async function setDiceExplodeSetting(guildId: string | Guild, enabled: bo
     const id = typeof guildId === 'string' ? guildId : guildId.id;
     await setSetting(id, 'diceExplode', enabled);
     console.log(`[GuildSettings] Dice explosion for guild ${id} set to: ${enabled}`);
+}
+
+// --- User-Specific Setting Accessors ---
+
+export function getUserRollEmbedColor(guildId: string | Guild, userId: string | User): ColorResolvable {
+    const gId = typeof guildId === 'string' ? guildId : guildId.id;
+    const uId = typeof userId === 'string' ? userId : userId.id;
+    return getUserSetting(gId, uId, 'rollEmbedColor', DEFAULT_USER_ROLL_EMBED_COLOR);
+}
+
+export async function setUserRollEmbedColor(guildId: string | Guild, userId: string | User, color: ColorResolvable): Promise<void> {
+    const gId = typeof guildId === 'string' ? guildId : guildId.id;
+    const uId = typeof userId === 'string' ? userId : userId.id;
+    await setUserSetting(gId, uId, 'rollEmbedColor', color);
+    console.log(`[UserSettings] Roll embed color for user ${uId} in guild ${gId} set to: ${color}`);
 }
 
 // Add more getters/setters for other settings here
