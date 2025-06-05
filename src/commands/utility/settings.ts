@@ -1,4 +1,3 @@
-// src/commands/utility/settings.ts
 import {
     SlashCommandBuilder,
     ChatInputCommandInteraction,
@@ -8,26 +7,25 @@ import {
     ButtonBuilder,
     ButtonStyle,
     ComponentType,
-    ColorResolvable, // Import
+    ColorResolvable,
 } from 'discord.js';
 import { Command, ExtendedClient } from '../../types';
 import {
     getDiceExplodeSetting,
     setDiceExplodeSetting,
-    getUserRollEmbedColor,  // New import
-    setUserRollEmbedColor, // New import
-    DEFAULT_USER_ROLL_EMBED_COLOR // New import
+    getUserRollEmbedColor,
+    setUserRollEmbedColor,
+    DEFAULT_USER_ROLL_EMBED_COLOR 
 } from '../../guildSettingsManager';
-import { parseColorString, PREDEFINED_COLORS } from '../../utils/colorUtils'; // New import
+import { parseColorString, PREDEFINED_COLORS } from '../../utils/colorUtils';
 
 export const settingsCommand: Command = {
     data: new SlashCommandBuilder()
         .setName('settings')
         .setDescription('Manage server-specific and personal bot settings.')
-        .setDefaultMemberPermissions(PermissionFlagsBits.ManageGuild) // For guild-wide settings
         .addSubcommand(subcommand =>
             subcommand
-                .setName('guild') // Renamed 'dice' to 'guild' for clarity if more guild settings come
+                .setName('guild')
                 .setDescription('Configure server-wide settings (requires Manage Guild permission).')
                 .addBooleanOption(option =>
                     option.setName('dice_explode')
@@ -37,12 +35,12 @@ export const settingsCommand: Command = {
         )
         .addSubcommand(subcommand =>
             subcommand
-                .setName('me') // User-specific settings
+                .setName('me')
                 .setDescription('Manage your personal settings for this server.')
                 .addStringOption(option =>
                     option.setName('roll_color')
                         .setDescription('Set embed color for your dice rolls (e.g., #FF0000, Red, or leave blank for options).')
-                        .setRequired(false) // Make it optional to trigger button flow
+                        .setRequired(false)
                 )
         )
         .addSubcommand(subcommand =>
@@ -61,11 +59,16 @@ export const settingsCommand: Command = {
         const user = interaction.user;
 
         if (subcommand === 'guild') {
+
             // Ensure user has ManageGuild permission for this subcommand specifically
             if (!interaction.memberPermissions?.has(PermissionFlagsBits.ManageGuild)) {
-                await interaction.reply({ content: 'You need the "Manage Guild" permission to change server-wide settings.', ephemeral: true});
+                await interaction.reply({
+                    content: 'You need the "Manage Guild" permission to change server-wide settings.',
+                    ephemeral: true,
+                });
                 return;
             }
+
             const explode = interaction.options.getBoolean('dice_explode', true);
             await setDiceExplodeSetting(interaction.guildId, explode);
             await interaction.reply({
