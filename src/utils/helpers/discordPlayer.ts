@@ -2,10 +2,11 @@ import { Player } from "discord-player";
 import { ExtendedClient } from "../../types";
 import { SoundcloudExtractor } from "discord-player-soundcloud";
 import { YoutubeiExtractor } from "discord-player-youtubei";
-import { SpotifyExtractor } from "discord-player-spotify";
+//import { SpotifyExtractor } from "discord-player-spotify";
 import { config } from "../../config";
 import ytdl from "@distube/ytdl-core";
 import { Readable } from "stream";
+import { SpotifyExtractor } from "@discord-player/extractor";
 
 /**
  * Initializes a new Player instance

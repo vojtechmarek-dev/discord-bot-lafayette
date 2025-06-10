@@ -1,4 +1,4 @@
-import { SlashCommandBuilder, ChatInputCommandInteraction, EmbedBuilder, ColorResolvable } from 'discord.js';
+import { SlashCommandBuilder, ChatInputCommandInteraction, EmbedBuilder, ColorResolvable, GuildMember } from 'discord.js';
 import { DiceRoll, Parser } from '@dice-roller/rpg-dice-roller';
 import { Command, ExtendedClient } from '../../types';
 import { FudgeDice, PercentileDice, StandardDice } from '@dice-roller/rpg-dice-roller/types/dice';
@@ -46,6 +46,9 @@ export const rollCommand: Command = {
                 .setRequired(false)) as SlashCommandBuilder,
     async execute(interaction: ChatInputCommandInteraction, client: ExtendedClient) {
         const user = interaction.user;
+        const member = interaction.member as GuildMember;
+        const displayName = member.displayName || user.displayName || user.username;
+
         const diceNotationInput = interaction.options.getString('dice') || '1d6';
 
 
@@ -82,7 +85,7 @@ export const rollCommand: Command = {
 
             const embed = new EmbedBuilder()
                 .setColor(embedColor)
-                .setTitle(`${user.displayName} hodil/a`)
+                .setTitle(`${displayName} hodil/a`)
                 .setDescription(resultString)
                 .setFields(
                     { name: 'Hody', value: rollsString, inline: true },
