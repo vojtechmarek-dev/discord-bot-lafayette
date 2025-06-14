@@ -1,6 +1,6 @@
 // src/commands/music/play.ts
 import { SlashCommandBuilder, ChatInputCommandInteraction, GuildMember, EmbedBuilder, ChannelType } from 'discord.js';
-import { QueryResolver, QueryType, useMainPlayer } from 'discord-player'; // Import from discord-player
+import { QueryResolver, QueryType, SearchResult, useMainPlayer } from 'discord-player'; // Import from discord-player
 import { Command, ExtendedClient, PlayerQueueMetadata } from '../../types'; // Use your PlayerQueueMetadata if defined
 
 export const playCommand: Command = {
@@ -10,7 +10,12 @@ export const playCommand: Command = {
     .addStringOption(option =>
       option.setName('query')
         .setDescription('Název nebo přímý URL odkaz')
-        .setRequired(true)) as SlashCommandBuilder,
+        .setRequired(true))
+      .addAttachmentOption(option =>
+            option.setName('file')
+                .setDescription('An MP3 file to play.')
+                .setRequired(false)
+      ) as SlashCommandBuilder,
   async execute(interaction: ChatInputCommandInteraction, client: ExtendedClient) {
     if (!interaction.guildId) {
       await interaction.reply({ content: 'This command can only be used in a server.', ephemeral: true });
@@ -37,6 +42,7 @@ export const playCommand: Command = {
     }
 
     const query = interaction.options.getString('query', true);
+    const attachmentInput = interaction.options.getAttachment('file'); 
     
     if (!query) {
       await interaction.reply({ content: 'Musíte zadat název skladby nebo URL k přehrání! Přídavný balíček "čtení myšlenek" nebyl bohužel nainstalován.', ephemeral: true });
@@ -46,9 +52,38 @@ export const playCommand: Command = {
     // let's defer the interaction as things can take time to process
     await interaction.deferReply();
 
-    try {
+    // Will hold the result from player.search or a manually created track
+    let searchResult: SearchResult; 
 
-        const searchResult = await player.search(query, {
+    try {
+      if (attachmentInput) {
+                // Prioritize attachment if provided
+                console.log(`[PlayCmd] Attachment received: ${attachmentInput.name}, type: ${attachmentInput.contentType}, URL: ${attachmentInput.url}`);
+                if (attachmentInput.contentType === 'audio/mpeg' || attachmentInput.name.toLowerCase().endsWith('.mp3')) {
+                    // discord-player's search can take a URL directly.
+                    // The attachment.url is a Discord CDN URL that discord-player should be able to handle.
+                    searchResult = await player.search(attachmentInput.url, {
+                        requestedBy: interaction.user,
+                        // searchEngine: QueryType.AUTO // Let discord-player try to figure it out
+                                                      // Or you might need to specify a direct file/http extractor if default doesn't pick it up
+                                                      // Often QueryType.FILE or let it auto-detect.
+                    });
+
+                    if (!searchResult || !searchResult.hasTracks()) {
+                         await interaction.editReply({ content: `❌ Could not process the attached file: ${attachmentInput.name}. It might not be a valid MP3 or streamable.` });
+                         return;
+                    }
+                    // Optional: You could create a more descriptive track title if needed
+                    // searchResult.tracks[0].title = attachmentInput.name; // discord-player might do this already
+                    // searchResult.tracks[0].author = "Uploaded File";
+
+                } else {
+                    await interaction.editReply({ content: '❌ The attached file is not an MP3. Please upload an MP3 file.', ephemeral: true });
+                    return;
+                }
+        } else if (query) {
+
+        searchResult = await player.search(query, {
             requestedBy: interaction.user,
             searchEngine: QueryType.AUTO, 
         });
@@ -104,6 +139,11 @@ export const playCommand: Command = {
             await interaction.editReply({ content: ` Analyzuji zvukový požadavek na **${searchResult.tracks[0].title}**... Můj výpočetní výkon je obrovský, přesto to nějakým způsobem trvá.` });
           }
       }
+        } else {
+            await interaction.editReply({ content: 'Please provide a search query, a URL, or attach an MP3 file.', ephemeral: true });
+            return;
+        }
+        
 
     } catch (error: any) {
       console.error('Error in /play command:', error);
