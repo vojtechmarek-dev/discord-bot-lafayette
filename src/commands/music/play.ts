@@ -78,7 +78,7 @@ export const playCommand: Command = {
                     // searchResult.tracks[0].author = "Uploaded File";
 
                 } else {
-                    await interaction.editReply({ content: '❌ The attached file is not an MP3. Please upload an MP3 file.', ephemeral: true });
+                    await interaction.reply({ content: '❌ The attached file is not an MP3. Please upload an MP3 file.', ephemeral: true });
                     return;
                 }
         } else if (query) {
