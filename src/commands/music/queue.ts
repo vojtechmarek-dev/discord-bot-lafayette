@@ -38,7 +38,7 @@ export const queueCommand: Command = {
 
     const queueEmbed = new EmbedBuilder()
         .setColor('#0099ff')
-        .setTitle('🎶 Music Queue')
+        .setTitle('🎶 Fronta')
         .setDescription(description || "No songs in queue.")
         .setTimestamp();
 
