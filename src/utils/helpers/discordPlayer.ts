@@ -6,7 +6,7 @@ import { YoutubeiExtractor } from "discord-player-youtubei";
 import { config } from "../../config";
 import ytdl from "@distube/ytdl-core";
 import { Readable } from "stream";
-import { SpotifyExtractor } from "@discord-player/extractor";
+import { AttachmentExtractor, SpotifyExtractor } from "@discord-player/extractor";
 
 /**
  * Initializes a new Player instance
@@ -82,12 +82,19 @@ export async function registerExtractors(player: Player): Promise<void> {
             });
 
 
-
-    
     if (!ytExt) {
         console.error("[EXTRACTORS] Failed to register Youtube Extractor.");
     } else {
         console.log("[EXTRACTORS] Youtube Extractor registered successfully.");
+    }
+
+    const attachmentExtractor = player.extractors.register(AttachmentExtractor, {});
+
+
+    if (!attachmentExtractor) {
+        console.error("[EXTRACTORS] Failed to register Attachment Extractor.");
+    } else {
+        console.log("[EXTRACTORS] Attachment Extractor registered successfully.");
     }
 
     }
