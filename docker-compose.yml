@@ -2,45 +2,25 @@ version: '3.8'
 
 services:
   lafayette-bot:
-    image: ghcr.io/vojtechmarek-dev/discord-bot-lafayette:main
+    image: discord-bot-lafayette:latest # Replace with your actual image name
     container_name: lafayette-bot
     restart: unless-stopped
     environment:
+      # Environment variables for the bot - use your own values or set them in a .env file
       - DISCORD_TOKEN=${DISCORD_TOKEN}
       - CLIENT_ID=${CLIENT_ID}
       - GUILD_ID=${GUILD_ID}
+      - BOT_OWNER_ID=${GUILD_ID}
+      - DP_FFMPEG_PATH=/usr/bin/ffmpeg
     volumes:
-      - ./bot_data:/usr/src/app/data  # bot_data - persistent storage for bot data
-      # Add any other environment variables your bot needs
-      # - SOME_API_KEY=${SOME_API_KEY}
-      # - DATABASE_URL=${DATABASE_URL}
-    # Uncomment if your bot needs persistent storage
-    # volumes:
-    #   - ./data:/app/data
-    #   - ./logs:/app/logs
-    
-    # Uncomment if your bot exposes any ports (like a web dashboard)
-    # ports:
-    #   - "3000:3000"
+      - ./bot_data:/usr/src/app/data  # persistent storage for bot data - make sure to set proper permissions
     
     # Resource limits (optional)
-    deploy:
-      resources:
-        limits:
-          memory: 512M
-          cpus: '0.5'
-        reservations:
-          memory: 256M
-          cpus: '0.25'
-    
-    # Health check (optional, adjust the command based on your bot)
-    # healthcheck:
-    #   test: ["CMD", "curl", "-f", "http://localhost:3000/health"]
-    #   interval: 30s
-    #   timeout: 10s
-    #   retries: 3
-    #   start_period: 40s
-
-networks:
-  default:
-    name: lafayette-bot-network
+    #deploy:
+    #  resources:
+    #    limits:
+    #      memory: 512M
+    #      cpus: '0.5'
+    #    reservations:
+    #      memory: 256M
+    #      cpus: '0.25'

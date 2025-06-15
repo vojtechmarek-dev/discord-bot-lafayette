@@ -7,4 +7,3 @@ Dockerfile
 .git
 .gitignore
 README.md
-# Any other local development files or large assets not needed in the image
