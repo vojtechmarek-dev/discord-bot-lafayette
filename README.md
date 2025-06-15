@@ -1,5 +1,7 @@
 # Lafayette - Discord Bot
 
+> ⚠️ **Disclaimer:** Some bot responses and messages are currently in Czech and some are in English. Internationalization (i18n) and localization support are planned for a future release.
+
 Lafayette is a multi-functional Discord bot built with Node.js, TypeScript, and leveraging powerful libraries like `discord.js`,`discord-player` and `rpg-dice-roller`. It features slash commands for various utilities, including dice rolling and music playback.
 
 ## Features
@@ -8,7 +10,7 @@ Lafayette is a multi-functional Discord bot built with Node.js, TypeScript, and 
 *   **Music Playback:**
     *   Play songs and playlists from YouTube, Spotify (searches on YouTube), and SoundCloud.
     *   Queue system.
-    *   Commands: `/play`, `/skip`, `/stop`, `/queue`.
+    *   Commands: `/play`, `/skip`, `/stop`, `/queue`, `/resume`, `/pause`.
 *   **Dice Rolling:**
     *   Supports standard RPG dice notation (e.g., `2d6+5`, `1d20-2`, `4dF`).
     *   Highlights critical successes (max roll) and critical failures (min roll) on dice.
@@ -16,18 +18,53 @@ Lafayette is a multi-functional Discord bot built with Node.js, TypeScript, and 
     *   Examples: `/roll dice:2d6`, `/roll dice:1d20+5, 4dF`.
 *   **Utility Commands:**
     *   `/ping`: Checks bot latency.
+    *   `/echo`: Owner-only, send a message as the bot.
+    *   `/settings`: Manage server and personal bot settings.
 *   **Structured Codebase:** TypeScript for type safety, organized command and event handlers.
 *   **Dockerized:** Ready for containerized deployment.
 *   **CI/CD with GitHub Actions:**
     *   Automated multi-platform Docker image builds (amd64, arm64) and pushes to GHCR on pushes to `main` and `release` branches.
     *   Automated deployment of slash commands on pushes to the `release` branch.
 
+## Slash Commands
+
+### 🎲 Fun
+- `/roll [dice]`  
+  Roll dice using RPG notation (e.g., `2d6+3`, `1d20`). Supports multiple rolls separated by `,` or `;`.
+
+### 🎵 Music
+- `/play [query]`  
+  Play a song or playlist from YouTube, Spotify, or SoundCloud.
+- `/skip`  
+  Skip the currently playing track.
+- `/stop`  
+  Stop playback, clear the queue, and leave the voice channel.
+- `/queue`  
+  Show the current music queue.
+- `/resume`  
+  Resume paused music.
+- `/pause`  
+  Pause the currently playing track.
+
+### 🛠️ Utility
+- `/ping`  
+  Replies with Pong! and shows bot latency.
+- `/echo [message] [title] [channel]`  
+  (Owner only) Send a message as the bot, optionally as an embed and/or to a specific channel.
+- `/settings`  
+  Manage server and personal bot settings.
+  - `/settings guild dice_explode:<true|false>`  
+    Enable/disable exploding dice for all rolls in the server.
+  - `/settings me roll_color:<color>`  
+    Set your personal dice roll embed color.
+  - `/settings view`  
+    View current server and personal settings.
+
 ## Prerequisites
 
-*   Node.js (v18.x or later recommended, check `package.json` engines)
+*   Node.js (v20.x or later recommended, check `package.json` engines)
 *   npm or yarn
-*   Docker (for building and running, or for deployment target)
-*   Ansible (for automated deployment using the provided playbook)
+*   (optional) Docker - for building and running, or for deployment target
 *   A Discord Bot Application:
     *   Create one on the [Discord Developer Portal](https://discord.com/developers/applications).
     *   Enable **Privileged Gateway Intents**:
@@ -58,6 +95,7 @@ Lafayette is a multi-functional Discord bot built with Node.js, TypeScript, and 
     DISCORD_TOKEN=YOUR_DISCORD_BOT_TOKEN
     CLIENT_ID=YOUR_BOT_APPLICATION_CLIENT_ID
     GUILD_ID=YOUR_DEVELOPMENT_SERVER_ID # For instant slash command updates during dev
+    BOT_OWNER_ID # for /echo command to work properly
 
     # Optional: Path to FFmpeg if not in system PATH and needed by discord-player
     # FFMPEG_PATH=/usr/bin/ffmpeg
