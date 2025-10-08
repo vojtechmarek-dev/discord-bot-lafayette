@@ -40,6 +40,10 @@ export async function registerExtractors(player: Player): Promise<void> {
     }
 
     const youtubeExtTemp = await player.extractors.register(YoutubeiExtractor, {
+        // temp solution! will be fixed in next version of discord-player-youtubei - hopefully ...
+          innertubeConfigRaw: {
+            player_id: '0004de42'
+        },
         generateWithPoToken: true,
         streamOptions: {    
             useClient: "WEB_EMBEDDED",
@@ -47,7 +51,7 @@ export async function registerExtractors(player: Player): Promise<void> {
 
         }
     });
-
+    
     const originalStream = youtubeExtTemp!.stream.bind(youtubeExtTemp);
 
     await player.extractors.unregister(YoutubeiExtractor.identifier);
@@ -55,6 +59,9 @@ export async function registerExtractors(player: Player): Promise<void> {
     let ytExt = null;
         try {
             ytExt = await player.extractors.register(YoutubeiExtractor, {
+                innertubeConfigRaw: {
+                    player_id: '0004de42'
+                },
                 createStream: async (track, ext) => {
                     try {
                         const result = await originalStream(track);
