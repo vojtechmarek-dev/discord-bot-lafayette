@@ -39,7 +39,6 @@ export async function registerExtractors(player: Player): Promise<void> {
         console.log("[EXTRACTORS] Spotify Extractor registered successfully.");
     }
 
-    try {  
     const youtubeExtTemp = await player.extractors.register(YoutubeiExtractor, {
         // temp solution! will be fixed in next version of discord-player-youtubei - hopefully ...
           innertubeConfigRaw: {
