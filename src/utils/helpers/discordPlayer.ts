@@ -40,10 +40,6 @@ export async function registerExtractors(player: Player): Promise<void> {
     }
 
     const youtubeExtTemp = await player.extractors.register(YoutubeiExtractor, {
-        // temp solution! will be fixed in next version of discord-player-youtubei - hopefully ...
-          innertubeConfigRaw: {
-            player_id: '0004de42'
-        },
         generateWithPoToken: true,
         streamOptions: {    
             useClient: "WEB_EMBEDDED",
