@@ -1,7 +1,7 @@
 import { Events, Interaction, Client } from 'discord.js';
 import { BotEvent } from '../types';
 
-export const interactionCreateEvent : BotEvent = { // This is our BotEvent structure
+export const interactionCreateEvent : BotEvent = {
   name: Events.InteractionCreate,
   async execute(interaction: Interaction, client: Client) {
      // Client is now the second arg passed from the loop

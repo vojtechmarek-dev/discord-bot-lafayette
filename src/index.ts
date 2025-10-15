@@ -1,8 +1,9 @@
-import { Client, GatewayIntentBits, Events, Message, Collection } from 'discord.js';
-import { config } from './config'; // Or directly use process.env if not using config.ts
-import commandsCollection from './commands'; // Import commands collection
+import { Client, GatewayIntentBits, Events } from 'discord.js';
+import { config } from './config';
+import commandsCollection from './commands';
 import { initPlayer, registerExtractors } from './utils/helpers/discordPlayer';
-import { loadGuildSettings } from './guildSettingsManager'; // Import the loader
+import { loadGuildSettings } from './guildSettingsManager';
+import { loadGuildState } from './guildStateManager';
 import { registerEvents } from './events';
 import { ExtendedClient } from './types';
 
@@ -10,39 +11,16 @@ import { ExtendedClient } from './types';
 const client = new Client({
     intents: [
       GatewayIntentBits.Guilds,          // Required for basic server functionality
-      //GatewayIntentBits.GuildMessages,   // Required to receive messages in guilds
       GatewayIntentBits.GuildVoiceStates, // Required to manage voice states
       GatewayIntentBits.MessageContent,  // Required to read message content (PRIVILEGED INTENT!)
-      // Add other intents your bot needs, e.g., GatewayIntentBits.GuildMembers
+      // Add other intents as the need arises
+      //GatewayIntentBits.GuildMessages,   // Required to receive messages in guilds
     ],
 });
 
-(async () => {    
-    // --- Load Guild Settings ---
-    await loadGuildSettings(); // Load settings before logging in or registering events fully
-
-    // --- Assign Commands to Client ---
-    client.commands = commandsCollection; // Assign the pre-populated collection
-
-    // --- Initialize Discord Player ---
-    const player = await initPlayer(client);
-    await registerExtractors(player);
-
-    // --- Register Events Manually ---
-    registerEvents(client, player);
-
-    clientLogin(client);
-})().catch(error => {
-    console.error('[SETUP] Error initializing Lafayette:', error);
-});
-
-
-
- // Call the function to attach all imported events
-
 // Log in to Discord with your client's token
 function clientLogin(client: ExtendedClient) {
-    client.login(config.DISCORD_TOKEN) // Or process.env.DISCORD_TOKEN
+    client.login(config.DISCORD_TOKEN)
         .then(() => {
             console.log('Login successful!');
         })
@@ -55,6 +33,29 @@ function clientLogin(client: ExtendedClient) {
     client.on(Events.Error, console.error);
     client.on(Events.Warn, console.warn);
 } 
+
+
+async function main() {    
+    // --- Load Guild Settings & State ---
+    await loadGuildSettings();
+    await loadGuildState();
+
+    // --- Assign Commands to Client ---
+    client.commands = commandsCollection; // Assign the pre-populated collection
+
+    // --- Initialize Discord Player ---
+    const player = await initPlayer(client);
+    await registerExtractors(player);
+
+    // --- Register Events Manually ---
+    registerEvents(client, player);
+
+    clientLogin(client);
+}
+
+main().catch(error => {
+    console.error('[SETUP] Error initializing Lafayette:', error);
+}); 
 
 // Optional: Graceful shutdown
 process.on('SIGINT', async () => {

@@ -2,6 +2,12 @@
 
 > ⚠️ **Disclaimer:** Some bot responses and messages are currently in Czech and some are in English. Internationalization (i18n) and localization support are planned for a future release.
 
+
+**TODO**
+- [] Internationalization (i18n) and localization
+- [] configurable deck cleanup interval
+- [] bot settings from fs json to redis cache
+
 Lafayette is a multi-functional Discord bot built with Node.js, TypeScript, and leveraging powerful libraries like `discord.js`,`discord-player` and `rpg-dice-roller`. It features slash commands for various utilities, including dice rolling and music playback.
 
 ## Features
@@ -25,12 +31,20 @@ Lafayette is a multi-functional Discord bot built with Node.js, TypeScript, and 
 *   **CI/CD with GitHub Actions:**
     *   Automated multi-platform Docker image builds (amd64, arm64) and pushes to GHCR on pushes to `main` and `release` branches.
     *   Automated deployment of slash commands on pushes to the `release` branch.
+*   **Card Decks (Server State):**
+    *   Server-wide poker deck with optional Jokers.
+    *   State persists across restarts in `data/guild-state.json`.
+    *   Inactive decks are cleaned up automatically (see Background Jobs below).
 
 ## Slash Commands
 
 ### 🎲 Fun
 - `/roll [dice]`  
   Roll dice using RPG notation (e.g., `2d6+3`, `1d20`). Supports multiple rolls separated by `,` or `;`.
+ - `/shuffle [jokers]`  
+   Shuffle a new poker deck for the server. `jokers` defaults to true.
+ - `/draw [count]`  
+   Draw 1–52 cards from the current server deck, tracking remaining/drawn cards.
 
 ### 🎵 Music
 - `/play [query]`  
@@ -99,6 +113,9 @@ Lafayette is a multi-functional Discord bot built with Node.js, TypeScript, and 
 
     # Optional: Path to FFmpeg if not in system PATH and needed by discord-player
     # FFMPEG_PATH=/usr/bin/ffmpeg
+
+    # TODO: Make deck cleanup interval configurable
+    # DECK_CLEANUP_INTERVAL_MS=21600000 # 6 hours (not implemented yet)
     ```
     *   `GUILD_ID` is your personal Discord server ID used for rapid testing of slash commands. Get it by enabling Developer Mode in Discord, right-clicking your server icon, and "Copy ID".
 
@@ -159,6 +176,17 @@ Then run:
 ```bash
 docker compose up -d
 ```
+
+## Data Storage
+
+- `data/guild-settings.json`: Persistent per-guild settings (e.g., dice explode, user roll color).
+- `data/guild-state.json`: Persistent per-guild runtime state for card decks.
+
+## Background Jobs
+
+- Card deck cleanup runs on bot ready and then every 6 hours by default.
+- Decks with no activity for 7 days are removed from state.
+- TODO: Make the cleanup interval configurable via env (`DECK_CLEANUP_INTERVAL_MS`).
 
 ## GitHub Actions CI/CD
 
