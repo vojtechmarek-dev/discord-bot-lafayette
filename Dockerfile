@@ -21,7 +21,7 @@ FROM node:22-alpine AS production
 WORKDIR /usr/src/app
 
 # Install runtime dependencies
-RUN apk add --no-cache ffmpeg opus
+RUN apk add --no-cache ffmpeg opus cairo-dev
 
 # Create non-root user first
 RUN addgroup -g 1001 -S nodejs && \
