@@ -1,12 +1,10 @@
 import { Player } from "discord-player";
 import { ExtendedClient } from "../../types";
 import { SoundcloudExtractor } from "discord-player-soundcloud";
-import { YoutubeiExtractor } from "discord-player-youtubei";
-//import { SpotifyExtractor } from "discord-player-spotify";
 import { config } from "../../config";
-import ytdl from "@distube/ytdl-core";
-import { Readable } from "stream";
 import { AttachmentExtractor, SpotifyExtractor } from "@discord-player/extractor";
+import { YoutubeSabrExtractor } from 'discord-player-googlevideo';
+
 
 /**
  * Initializes a new Player instance
@@ -39,55 +37,9 @@ export async function registerExtractors(player: Player): Promise<void> {
         console.log("[EXTRACTORS] Spotify Extractor registered successfully.");
     }
 
-    const youtubeExtTemp = await player.extractors.register(YoutubeiExtractor, {
-        // temp solution! will be fixed in next version of discord-player-youtubei - hopefully ...
-          innertubeConfigRaw: {
-            player_id: '0004de42'
-        },
-        generateWithPoToken: true,
-        streamOptions: {    
-            useClient: "WEB_EMBEDDED",
-            highWaterMark: 1024 * 1024 // 1MB buffer size
-
-        }
-    });
+    const ytExt = await player.extractors.register(YoutubeSabrExtractor, {});
     
-    const originalStream = youtubeExtTemp!.stream.bind(youtubeExtTemp);
 
-    await player.extractors.unregister(YoutubeiExtractor.identifier);
-
-    let ytExt = null;
-        try {
-            ytExt = await player.extractors.register(YoutubeiExtractor, {
-                innertubeConfigRaw: {
-                    player_id: '0004de42'
-                },
-                createStream: async (track, ext) => {
-                    try {
-                        const result = await originalStream(track);
-                        // If result is null or undefined, throw to trigger fallback
-                        if (result == null) throw new Error("originalStream returned null");
-                        return result as unknown as string | Readable;
-                    } catch (err: any) {
-                        console.warn(`Original stream failed for ${track.url}, falling back to ytdl-core. Error: ${err?.message}`);
-                        try {
-                            const info = await ytdl.getInfo(track.url);
-                            if (!info.formats?.length) throw new Error("No formats found");
-                            const format = info.formats
-                                .filter(f => f.hasAudio && (!track.live || f.isHLS))
-                                .sort((a, b) => Number(b.audioBitrate) - Number(a.audioBitrate) || Number(a.bitrate) - Number(b.bitrate))[0];
-                            if (!format) throw new Error("No suitable format found");
-                            return format.url;
-                        } catch (ytdlErr) {
-                            console.error("ytdl-core also failed:", ytdlErr);
-                            // Return a dummy empty readable stream to satisfy type, or throw error
-                            const { Readable } = await import("stream");
-                            return Readable.from([]);
-                        }
-                    }
-                },
-            });
-    
     if (!ytExt) {
         console.error("[EXTRACTORS] Failed to register Youtube Extractor.");
     } else {
@@ -103,9 +55,5 @@ export async function registerExtractors(player: Player): Promise<void> {
         console.log("[EXTRACTORS] Attachment Extractor registered successfully.");
     }
 
-    }
-    catch (e) {
-            console.error("Failed to register YoutubeiExtractor:", e);
-     }
-
-    }
+  
+}

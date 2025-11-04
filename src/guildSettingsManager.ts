@@ -1,19 +1,18 @@
-// src/guildSettingsManager.ts
-import fs from 'node:fs/promises'; // Use promise-based fs for async operations
+import fs from 'node:fs/promises';
 import path from 'node:path';
 import { ColorResolvable, Guild, User } from 'discord.js';
 
 // Define the structure for a single guild's settings
 export interface GuildSettings {
-    diceExplode?: boolean; // Optional: will use default if not set
+    diceExplode?: boolean;
     // language todo
-    userSettings?: { // New: Nested object for user-specific settings
+    userSettings?: { 
         [userId: string]: UserSpecificSettings;
     };
 }
 
 export interface UserSpecificSettings {
-    rollEmbedColor?: ColorResolvable; // Store as ColorResolvable (string hex, number, or keyword)
+    rollEmbedColor?: ColorResolvable;
 }
 
 // Define the structure for the entire settings file
@@ -22,12 +21,12 @@ interface AllGuildSettings {
 }
 
 const SETTINGS_FILE_PATH = path.join(__dirname, '..', 'data', 'guild-settings.json'); // Store in a 'data' folder at project root
-const DEFAULT_DICE_EXPLODE = true; // Default setting for dice explosion
+const DEFAULT_DICE_EXPLODE = true;
 export const DEFAULT_USER_ROLL_EMBED_COLOR: ColorResolvable = '#ffffff';
 
 let guildSettingsCache: AllGuildSettings = {};
 
-
+// Card deck state moved to guildStateManager
 
 /**
  * Ensures the data directory exists.
@@ -67,7 +66,7 @@ export async function loadGuildSettings(): Promise<void> {
         }
     }
 }
-
+ 
 /**
  * Saves the current state of guildSettingsCache to the JSON file.
  * Call this after any setting modification.

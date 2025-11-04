@@ -34,9 +34,18 @@ declare module 'discord.js' {
   }
 }
 
-// Metadata type for discord-player queue
 export interface PlayerQueueMetadata {
     channel?: TextBasedChannel; // Channel where commands are initiated
-    interaction?: ChatInputCommandInteraction; // Optionally store the interaction
-    // Add any other data you want to associate with a queue
+    interaction?: ChatInputCommandInteraction; 
 }
+
+export type Suit = '♠️' | '♥️' | '♦️' | '♣️' | '🃏';
+export type Rank = 'A' | '2' | '3' | '4' | '5' | '6' | '7' | '8' | '9' | '10' | 'J' | 'Q' | 'K' | 'Joker';
+export interface Card {
+    id: string; // Unique ID for each card instance, e.g., "KH" for King of Hearts, "JokerR" for Red Joker
+    suit: Suit;
+    rank: Rank;
+    color: 'red' | 'black'; // Optional, can be derived from suit
+}
+
+export type DeckType = 'poker';

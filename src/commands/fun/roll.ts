@@ -3,6 +3,7 @@ import { DiceRoll, Parser } from '@dice-roller/rpg-dice-roller';
 import { Command, ExtendedClient } from '../../types';
 import { FudgeDice, PercentileDice, StandardDice } from '@dice-roller/rpg-dice-roller/types/dice';
 import { getDiceExplodeSetting, getUserRollEmbedColor } from '../../guildSettingsManager';
+import { getDisplayName } from '../../utils/interactionUtils';
 
 // Helper function to format individual die rolls with bolding for max values
 function formatIndividualRolls(rollInstance: DiceRoll, explodeInfoEnabled: boolean): string {
@@ -46,8 +47,7 @@ export const rollCommand: Command = {
                 .setRequired(false)) as SlashCommandBuilder,
     async execute(interaction: ChatInputCommandInteraction, client: ExtendedClient) {
         const user = interaction.user;
-        const member = interaction.member as GuildMember;
-        const displayName = member.displayName || user.displayName || user.username;
+        const displayName = getDisplayName(interaction);
 
         const diceNotationInput = interaction.options.getString('dice') || '1d6';
 

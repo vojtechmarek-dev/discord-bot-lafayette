@@ -3,6 +3,8 @@ import { Command } from "../types";
 import { echoCommand, pingCommand, settingsCommand } from "./utility";
 import { pauseCommand, playCommand, playFileCommand, queueCommand, resumeCommand, skipCommand, stopCommand } from "./music";
 import { rollCommand } from "./fun";
+import { drawCommand } from "./fun/draw";
+import { shuffleCommand } from "./fun/shuffe";
 
 // Create an array of all command objects
 const allCommands: Command[] = [
@@ -16,6 +18,8 @@ const allCommands: Command[] = [
     pauseCommand,
     rollCommand,
     echoCommand,
+    drawCommand,
+    shuffleCommand,
     settingsCommand
 ];
 
