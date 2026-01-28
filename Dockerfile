@@ -1,46 +1,62 @@
+# Stage 1: Builder
 FROM node:22-slim AS builder
 WORKDIR /usr/src/app
 
-# System deps to compile native modules
-RUN apk add --no-cache --virtual .build-deps \
-    build-base python3 pkgconf \
-    cairo-dev pango-dev
+# Install build dependencies (Debian equivalents of apk add build-base...)
+# canvas needs: libcairo2-dev, libpango1.0-dev, libjpeg-dev, libgif-dev, librsvg2-dev
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    build-essential \
+    python3 \
+    pkg-config \
+    libcairo2-dev \
+    libpango1.0-dev \
+    libjpeg-dev \
+    libgif-dev \
+    librsvg2-dev \
+    && rm -rf /var/lib/apt/lists/*
 
-# Copy package files first
 COPY package*.json ./
 
-# Install all dependencies (including dev for build)
+# Install dependencies (canvas will likely download a prebuild now)
 RUN npm ci --verbose
 
-# Copy source code
 COPY . .
 
-# Build the application
 RUN npm run build
 
-# Prune devDependencies to keep only production deps for runtime copy
+# Prune devDependencies
 RUN npm prune --omit=dev
 
-# Verify build output
+# Verify build
 RUN ls -la dist/
 
 # Stage 2: Production image
 FROM node:22-slim AS production
 WORKDIR /usr/src/app
 
-# Install runtime dependencies (no build toolchain)
-RUN apk add --no-cache ffmpeg opus cairo pango libsodium
+# Install runtime libraries (Debian equivalents)
+# ffmpeg, cairo, pango, libsodium
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    ffmpeg \
+    libcairo2 \
+    libpango-1.0-0 \
+    libpangocairo-1.0-0 \
+    libsodium23 \
+    libjpeg62-turbo \
+    libgif7 \
+    librsvg2-2 \
+    && rm -rf /var/lib/apt/lists/*
 
-# Create non-root user first
-RUN addgroup -g 1001 -S nodejs && \
-    adduser -S discord-bot -u 1001 -G nodejs
+# Create non-root user (Debian syntax)
+RUN groupadd -g 1001 nodejs && \
+    useradd -u 1001 -g nodejs -m -s /bin/bash discord-bot
 
-# Copy built application and runtime node_modules from builder
+# Copy built application and dependencies
 COPY --from=builder /usr/src/app/dist ./dist
 COPY --from=builder /usr/src/app/node_modules ./node_modules
 COPY --from=builder /usr/src/app/package.json ./package.json
 
-# Verify dist directory
+# Verify dist
 RUN ls -la dist/ && test -f dist/index.js
 
 # Change ownership
@@ -48,9 +64,6 @@ RUN chown -R discord-bot:nodejs /usr/src/app
 
 # Switch to non-root user
 USER discord-bot
-
-# Verify everything is accessible
-RUN node -e "console.log('Setup complete')"
 
 # Start the bot
 CMD ["node", "dist/index.js"]
