@@ -1,4 +1,4 @@
-FROM node:22-alpine AS builder
+FROM node:22-slim AS builder
 WORKDIR /usr/src/app
 
 # System deps to compile native modules
@@ -25,7 +25,7 @@ RUN npm prune --omit=dev
 RUN ls -la dist/
 
 # Stage 2: Production image
-FROM node:22-alpine AS production
+FROM node:22-slim AS production
 WORKDIR /usr/src/app
 
 # Install runtime dependencies (no build toolchain)
