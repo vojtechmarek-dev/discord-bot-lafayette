@@ -30,6 +30,7 @@ Add these to repository settings:
 - `DISCORD_TOKEN_CANARY`: token for dedicated canary bot account
 - `CANARY_GUILD_ID`: test guild/server ID
 - `CANARY_VOICE_CHANNEL_ID`: voice channel ID used for smoke runs
+- `CANARY_TEXT_CHANNEL_ID`: optional text channel ID for pass/fail notifications
 - `CANARY_QUERY`: media query/URL for playback (optional, defaults in script)
 - `DP_FFMPEG_PATH`: optional, only if your environment requires custom ffmpeg path
 

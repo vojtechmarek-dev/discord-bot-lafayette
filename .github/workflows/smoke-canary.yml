@@ -27,6 +27,7 @@ jobs:
           DISCORD_TOKEN_CANARY: ${{ secrets.DISCORD_TOKEN_CANARY }}
           CANARY_GUILD_ID: ${{ secrets.CANARY_GUILD_ID }}
           CANARY_VOICE_CHANNEL_ID: ${{ secrets.CANARY_VOICE_CHANNEL_ID }}
+          CANARY_TEXT_CHANNEL_ID: ${{ secrets.CANARY_TEXT_CHANNEL_ID }}
           CANARY_QUERY: ${{ secrets.CANARY_QUERY }}
           DP_FFMPEG_PATH: ${{ secrets.DP_FFMPEG_PATH }}
         run: npm run smoke:canary

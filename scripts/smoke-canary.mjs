@@ -7,6 +7,7 @@ const {
 	DISCORD_TOKEN_CANARY,
 	CANARY_GUILD_ID,
 	CANARY_VOICE_CHANNEL_ID,
+	CANARY_TEXT_CHANNEL_ID,
 	CANARY_QUERY,
 	DP_FFMPEG_PATH,
 } = process.env;
@@ -40,6 +41,35 @@ function withTimeout(promise, timeoutMs, label) {
 	});
 }
 
+async function postCanaryStatus(client, status, details) {
+	if (!CANARY_TEXT_CHANNEL_ID) {
+		return;
+	}
+
+	if (!client.isReady()) {
+		return;
+	}
+
+	try {
+		const channel = await client.channels.fetch(CANARY_TEXT_CHANNEL_ID);
+		if (!channel || !channel.isTextBased()) {
+			console.warn("[SMOKE] CANARY_TEXT_CHANNEL_ID is not a text channel.");
+			return;
+		}
+
+		const icon = status === "PASSED" ? "✅" : "❌";
+		const timestamp = new Date().toISOString();
+		await channel.send(
+			`${icon} Smoke canary ${status} at ${timestamp}\n` +
+			`Guild: ${CANARY_GUILD_ID}\n` +
+			`Voice channel: ${CANARY_VOICE_CHANNEL_ID}\n` +
+			`Details: ${details}`
+		);
+	} catch (error) {
+		console.warn("[SMOKE] Failed to post canary status message:", error);
+	}
+}
+
 async function runCanary() {
 	const token = requiredEnv("DISCORD_TOKEN_CANARY", DISCORD_TOKEN_CANARY);
 	const guildId = requiredEnv("CANARY_GUILD_ID", CANARY_GUILD_ID);
@@ -55,6 +85,8 @@ async function runCanary() {
 
 	let playbackStarted = false;
 	let playbackError = null;
+	let smokeStatus = "FAILED";
+	let smokeDetails = "Unknown failure";
 
 	player.events.on("playerStart", (queue, track) => {
 		playbackStarted = true;
@@ -150,8 +182,16 @@ async function runCanary() {
 			"Wait for playerStart"
 		);
 
+		smokeStatus = "PASSED";
+		smokeDetails = "Voice join and playback start completed.";
 		console.log("[SMOKE] SUCCESS: voice + playback canary passed.");
+	} catch (error) {
+		smokeStatus = "FAILED";
+		smokeDetails = error instanceof Error ? error.message : String(error);
+		throw error;
 	} finally {
+		await postCanaryStatus(client, smokeStatus, smokeDetails);
+
 		const queue = player.nodes.get(CANARY_GUILD_ID || "");
 		if (queue) {
 			try {
