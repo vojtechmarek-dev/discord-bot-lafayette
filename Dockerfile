@@ -1,5 +1,5 @@
 # Stage 1: Builder
-FROM node:22-slim AS builder
+FROM node:24-slim AS builder
 WORKDIR /usr/src/app
 
 # Install build dependencies (Debian equivalents of apk add build-base...)
@@ -31,7 +31,7 @@ RUN npm prune --omit=dev
 RUN ls -la dist/
 
 # Stage 2: Production image
-FROM node:22-slim AS production
+FROM node:24-slim AS production
 WORKDIR /usr/src/app
 
 # Install runtime libraries (Debian equivalents)
