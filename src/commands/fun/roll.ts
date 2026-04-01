@@ -6,7 +6,7 @@ import { getDiceExplodeSetting, getUserRollEmbedColor } from '../../guildSetting
 import { getDisplayName } from '../../utils/interactionUtils';
 
 // Helper function to format individual die rolls with bolding for max values
-function formatIndividualRolls(rollInstance: DiceRoll, explodeInfoEnabled: boolean): string {
+export function formatIndividualRolls(rollInstance: DiceRoll, explodeInfoEnabled: boolean): string {
 
     const rolledDiceParts = rollInstance.rolls.filter(group => typeof group == 'object' && 'rolls' in group);
     const parsedDiceParts: (StandardDice | FudgeDice | PercentileDice )[] = Parser.parse(rollInstance.notation).filter(group => typeof group == 'object' && 'sides' in group);
@@ -21,7 +21,7 @@ function formatIndividualRolls(rollInstance: DiceRoll, explodeInfoEnabled: boole
                 const rolledValuesString = rolledDiceValues.map(rolledResult => {
                     // check if rolled highest possible value of the rolled die
                     if (explodeInfoEnabled && rolledResult.value == dice.sides) {
-                        return `${rolledResult.value}!`
+                        return `${rolledResult.value}!`;
                     } else {
                         return rolledResult.toString();
                     }
@@ -34,6 +34,17 @@ function formatIndividualRolls(rollInstance: DiceRoll, explodeInfoEnabled: boole
         console.warn(`Warning: Mismatch between rolled parts (${rolledDiceParts.length}) and parsed notation parts (${parsedDiceParts.length}) for notation "${rollInstance.notation}"`);
         return rollInstance.output;
     }
+}
+
+export function splitDiceNotations(diceNotationInput: string): string[] {
+    return diceNotationInput
+        .split(/[,;]/)
+        .map(s => s.trim())
+        .filter(s => s.length > 0);
+}
+
+export function hasTooManyNotations(notationsToRoll: string[], maxNotations: number = 5): boolean {
+    return notationsToRoll.length > maxNotations;
 }
 
 
@@ -53,12 +64,9 @@ export const rollCommand: Command = {
 
 
         try {
-            const notationsToRoll = diceNotationInput
-                .split(/[,;]/)
-                .map(s => s.trim())
-                .filter(s => s.length > 0);
+            const notationsToRoll = splitDiceNotations(diceNotationInput);
 
-            if (notationsToRoll.length > 5) { // Limit number of multiple rolls
+            if (hasTooManyNotations(notationsToRoll)) { // Limit number of multiple rolls
                 await interaction.reply({ content: 'Zadrž kovboji! Můžete požádat pouze o 5 sad házení! Vypadám snad, že těch kostek mám nekonečno?.', ephemeral: true });
                 return;
             }
@@ -70,8 +78,8 @@ export const rollCommand: Command = {
                 const roll = new DiceRoll(diceNotation);
                 const individualRolledDiceFormatted = formatIndividualRolls(roll, interaction.guildId ? getDiceExplodeSetting(interaction.guildId) : false);
                 resultString += `Požadavek: \`[${roll.notation}]\`\n`;
-                rollsString += `${individualRolledDiceFormatted}\n`
-                totalsString += `**${roll.total}**\n`
+                rollsString += `${individualRolledDiceFormatted}\n`;
+                totalsString += `**${roll.total}**\n`;
             }
 
             let embedColor: ColorResolvable = '#2bff31'; // Default Discord dark theme background
@@ -90,7 +98,7 @@ export const rollCommand: Command = {
                 .setFields(
                     { name: 'Hody', value: rollsString, inline: true },
                     { name: 'Výsledek', value: totalsString, inline: true }
-                )
+                );
             //.setFooter({ text: `Rolled by ${user.tag}` });
 
             // For debugging the roll object structure:

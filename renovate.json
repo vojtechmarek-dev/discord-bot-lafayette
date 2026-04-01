@@ -1,0 +1,60 @@
+{
+  "$schema": "https://docs.renovatebot.com/renovate-schema.json",
+  "extends": [
+    "config:recommended"
+  ],
+  "timezone": "Europe/Prague",
+  "schedule": [
+    "before 6am on monday"
+  ],
+  "rangeStrategy": "replace",
+  "dependencyDashboard": true,
+  "prConcurrentLimit": 5,
+  "packageRules": [
+    {
+      "matchManagers": [
+        "npm"
+      ],
+      "matchDepTypes": [
+        "dependencies"
+      ],
+      "groupName": "runtime dependencies",
+      "separateMinorPatch": true
+    },
+    {
+      "matchManagers": [
+        "npm"
+      ],
+      "matchDepTypes": [
+        "devDependencies"
+      ],
+      "groupName": "dev dependencies",
+      "automerge": true
+    },
+    {
+      "matchPackageNames": [
+        "discord.js",
+        "@discordjs/voice",
+        "discord-player",
+        "@discord-player/extractor",
+        "@distube/ytdl-core",
+        "discord-player-googlevideo",
+        "discord-player-soundcloud",
+        "discord-player-spotify",
+        "ffmpeg-static"
+      ],
+      "groupName": "voice and media stack",
+      "automerge": false,
+      "labels": [
+        "dependencies",
+        "media"
+      ]
+    },
+    {
+      "matchUpdateTypes": [
+        "major"
+      ],
+      "automerge": false
+    }
+  ]
+}

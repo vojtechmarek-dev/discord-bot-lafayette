@@ -65,7 +65,7 @@ export const drawCommand: Command = {
         const embed = new EmbedBuilder()
             .setColor(embedColor)
             .setTitle(`${displayName} vytáhl/a kart${countToDraw > 1 ? 'y' : 'u'}`)
-            .setDescription(`Karty: **${drawnCardsString}**`)
+            .setDescription(`Karty: **${drawnCardsString}**`);
 
         if (deckState.shuffledBy) {
             embed.setFooter({ text: `Balíček promíchal/a ${deckState.shuffledBy || 'Unknown User'}.\nTaženo bylo ${deckState.drawnCards.length} karet. Zbývá ${deckState.remainingCards.length}.` });
