@@ -42,6 +42,10 @@ function withTimeout(promise, timeoutMs, label) {
 }
 
 async function postCanaryStatus(client, status, details) {
+	if (status === "ABORTED") {
+		return;
+	}
+
 	if (!CANARY_TEXT_CHANNEL_ID) {
 		return;
 	}
@@ -68,6 +72,21 @@ async function postCanaryStatus(client, status, details) {
 	} catch (error) {
 		console.warn("[SMOKE] Failed to post canary status message:", error);
 	}
+}
+
+function isAbortLikeError(error) {
+	if (!error) {
+		return false;
+	}
+
+	const message = error instanceof Error ? error.message : String(error);
+	const lowered = message.toLowerCase();
+	return (
+		lowered.includes("the operation was aborted") ||
+		lowered.includes("operation was aborted") ||
+		lowered.includes("aborterror") ||
+		lowered.includes("aborted")
+	);
 }
 
 async function runCanary() {
@@ -188,6 +207,9 @@ async function runCanary() {
 	} catch (error) {
 		smokeStatus = "FAILED";
 		smokeDetails = error instanceof Error ? error.message : String(error);
+		if (isAbortLikeError(error)) {
+			smokeStatus = "ABORTED";
+		}
 		throw error;
 	} finally {
 		await postCanaryStatus(client, smokeStatus, smokeDetails);

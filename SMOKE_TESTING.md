@@ -49,6 +49,8 @@ Add these to repository settings:
 - Require `Smoke Canary Required` in branch protection.
 - Renovate PRs labeled `media` or `major` must pass smoke before merge.
 - Use a dedicated canary guild/channel to avoid user-facing disruption.
+- Workflow concurrency is enabled to keep only one active canary run per PR/ref.
+- Aborted/cancelled runs do not post failure messages to `CANARY_TEXT_CHANNEL_ID`.
 
 ## Future Hardening (next step)
 
