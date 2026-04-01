@@ -1,0 +1,55 @@
+# Smoke Testing Plan
+
+This repository now includes a canary smoke test scaffold for Discord voice + media playback.
+
+## Scope
+
+The canary verifies:
+
+- canary bot can log in
+- canary bot can resolve a playback query
+- canary bot can join the configured voice channel
+- `discord-player` emits `playerStart`
+
+This is designed to catch breakages from frequent dependency updates in:
+
+- `discord.js` / `@discordjs/voice`
+- `discord-player` + extractor packages
+- YouTube/media integration chain
+
+## Files
+
+- Workflow: `.github/workflows/smoke-canary.yml`
+- Script: `scripts/smoke-canary.mjs`
+- NPM script: `npm run smoke:canary`
+
+## Required GitHub Secrets
+
+Add these to repository settings:
+
+- `DISCORD_TOKEN_CANARY`: token for dedicated canary bot account
+- `CANARY_GUILD_ID`: test guild/server ID
+- `CANARY_VOICE_CHANNEL_ID`: voice channel ID used for smoke runs
+- `CANARY_QUERY`: media query/URL for playback (optional, defaults in script)
+- `DP_FFMPEG_PATH`: optional, only if your environment requires custom ffmpeg path
+
+## First Run
+
+1. Add secrets listed above.
+2. Run workflow manually using `workflow_dispatch`.
+3. Confirm logs contain:
+   - `[SMOKE] Client ready`
+   - `[SMOKE] Playback started`
+   - `[SMOKE] SUCCESS`
+
+## Recommended Operating Mode
+
+- Keep schedule enabled (daily).
+- Review failures before merging Renovate PRs touching media stack packages.
+- Use a dedicated canary guild/channel to avoid user-facing disruption.
+
+## Future Hardening (next step)
+
+- Add secondary source test to cover non-YouTube transport path.
+- Post failure notifications to Discord webhook or issue tracker.
+- Persist small JSON smoke report artifact for trend analysis.

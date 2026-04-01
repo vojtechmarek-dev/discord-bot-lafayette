@@ -9,6 +9,7 @@
     "dev": "tsx watch src/index.ts",
     "debug": "tsx --inspect src/index.ts",
     "deploy:commands": "tsx deploy-commands.ts",
+    "smoke:canary": "node scripts/smoke-canary.mjs",
     "typecheck": "tsc --noEmit",
     "lint": "eslint src --ext .ts",
     "test": "node --import tsx --test test/**/*.test.ts"
