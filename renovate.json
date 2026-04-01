@@ -29,6 +29,23 @@
         "devDependencies"
       ],
       "groupName": "dev dependencies",
+      "matchUpdateTypes": [
+        "minor",
+        "patch",
+        "digest"
+      ],
+      "automerge": true
+    },
+    {
+      "matchManagers": [
+        "github-actions"
+      ],
+      "matchUpdateTypes": [
+        "minor",
+        "patch",
+        "digest"
+      ],
+      "groupName": "github actions (safe updates)",
       "automerge": true
     },
     {
@@ -54,7 +71,11 @@
       "matchUpdateTypes": [
         "major"
       ],
-      "automerge": false
+      "automerge": false,
+      "labels": [
+        "dependencies",
+        "major"
+      ]
     }
   ]
 }

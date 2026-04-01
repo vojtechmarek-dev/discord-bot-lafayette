@@ -4,9 +4,48 @@ on:
   workflow_dispatch:
   schedule:
     - cron: "30 4 * * *"
+  pull_request:
+    types: [opened, synchronize, reopened, labeled, unlabeled]
 
 jobs:
+  evaluate-smoke-scope:
+    runs-on: ubuntu-latest
+    outputs:
+      should_run: ${{ steps.eval.outputs.should_run }}
+    steps:
+      - id: eval
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+          ACTOR: ${{ github.actor }}
+          HEAD_REF: ${{ github.head_ref }}
+          LABELS_JSON: ${{ toJson(github.event.pull_request.labels.*.name) }}
+        run: |
+          should_run="false"
+
+          if [[ "$EVENT_NAME" == "schedule" || "$EVENT_NAME" == "workflow_dispatch" ]]; then
+            should_run="true"
+          elif [[ "$EVENT_NAME" == "pull_request" ]]; then
+            is_renovate="false"
+            has_required_label="false"
+
+            if [[ "$ACTOR" == "renovate[bot]" || "$HEAD_REF" == renovate/* ]]; then
+              is_renovate="true"
+            fi
+
+            if [[ "$LABELS_JSON" == *"media"* || "$LABELS_JSON" == *"major"* ]]; then
+              has_required_label="true"
+            fi
+
+            if [[ "$is_renovate" == "true" && "$has_required_label" == "true" ]]; then
+              should_run="true"
+            fi
+          fi
+
+          echo "should_run=$should_run" >> "$GITHUB_OUTPUT"
+
   smoke-canary:
+    needs: evaluate-smoke-scope
+    if: ${{ needs.evaluate-smoke-scope.outputs.should_run == 'true' }}
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
@@ -31,3 +70,17 @@ jobs:
           CANARY_QUERY: ${{ secrets.CANARY_QUERY }}
           DP_FFMPEG_PATH: ${{ secrets.DP_FFMPEG_PATH }}
         run: npm run smoke:canary
+
+  smoke-canary-required:
+    name: Smoke Canary Required
+    needs: [evaluate-smoke-scope, smoke-canary]
+    if: ${{ always() }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Enforce required smoke result for major/media Renovate PRs
+        run: |
+          if [[ "${{ needs.evaluate-smoke-scope.outputs.should_run }}" == "true" && "${{ needs.smoke-canary.result }}" != "success" ]]; then
+            echo "Smoke canary was required but did not pass."
+            exit 1
+          fi
+          echo "Smoke canary requirement satisfied."

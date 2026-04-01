@@ -46,7 +46,8 @@ Add these to repository settings:
 ## Recommended Operating Mode
 
 - Keep schedule enabled (daily).
-- Review failures before merging Renovate PRs touching media stack packages.
+- Require `Smoke Canary Required` in branch protection.
+- Renovate PRs labeled `media` or `major` must pass smoke before merge.
 - Use a dedicated canary guild/channel to avoid user-facing disruption.
 
 ## Future Hardening (next step)
