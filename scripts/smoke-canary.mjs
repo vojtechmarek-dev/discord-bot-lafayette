@@ -146,7 +146,7 @@ async function runCanary() {
 		await player.extractors.register(YoutubeiExtractor, {
 			generateWithPoToken: true,
 			disablePlayer: true,
-			streamOptions: { useClient: "TV_EMBEDDED" },
+			streamOptions: { useClient: "ANDROID" },
 		});
 
 		const guild = await client.guilds.fetch(guildId);

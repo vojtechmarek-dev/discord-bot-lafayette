@@ -47,7 +47,7 @@ export async function registerExtractors(player: Player): Promise<void> {
         // uses direct URLs and matches discord-player-youtubei guidance for disablePlayer.
         disablePlayer: true,
         streamOptions: {
-            useClient: "TV_EMBEDDED",
+            useClient: "IOS",
         },
     });
     
