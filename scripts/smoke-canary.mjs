@@ -145,7 +145,8 @@ async function runCanary() {
 		console.log("[SMOKE] Registering Youtube extractor...");
 		await player.extractors.register(YoutubeiExtractor, {
 			generateWithPoToken: true,
-			streamOptions: { useClient: "WEB" },
+			disablePlayer: true,
+			streamOptions: { useClient: "ANDROID" },
 		});
 
 		const guild = await client.guilds.fetch(guildId);
