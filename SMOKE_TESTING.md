@@ -33,7 +33,6 @@ Add these to repository settings:
 - `CANARY_TEXT_CHANNEL_ID`: optional text channel ID for pass/fail notifications
 - `CANARY_QUERY`: media query/URL for playback (optional, defaults in script)
 - `DP_FFMPEG_PATH`: optional, only if your environment requires custom ffmpeg path
-- `YOUTUBE_OAUTH_TOKENS`: optional; full OAuth string from `npx --no discord-player-youtubei` (same value as local `.env` `YOUTUBE_OAUTH_TOKENS`) for signed-in YouTube / InnerTube
 
 ## First Run
 

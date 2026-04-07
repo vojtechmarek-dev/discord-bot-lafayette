@@ -2,14 +2,7 @@ import dotenv from 'dotenv';
 
 dotenv.config();
 
-const {
-	DISCORD_TOKEN,
-	CLIENT_ID,
-	GUILD_ID,
-	BOT_OWNER_ID,
-	DP_FFMPEG_PATH,
-	YOUTUBE_OAUTH_TOKENS,
-} = process.env;
+const { DISCORD_TOKEN, CLIENT_ID, GUILD_ID, BOT_OWNER_ID, DP_FFMPEG_PATH } = process.env;
 
 console.log(`[Config] Raw BOT_OWNER_ID from process.env: ${BOT_OWNER_ID ? 'SET' : 'NOT SET'}`);
 
@@ -27,11 +20,9 @@ if (!BOT_OWNER_ID) {
 }
 
 export const config = {
-	DISCORD_TOKEN,
-	CLIENT_ID,
-	GUILD_ID,
-	BOT_OWNER_ID,
-	DP_FFMPEG_PATH,
-	/** Full semicolon-separated OAuth string from `npx --no discord-player-youtubei` (optional). */
-	YOUTUBE_OAUTH_TOKENS: YOUTUBE_OAUTH_TOKENS?.trim() || undefined,
+    DISCORD_TOKEN,
+    CLIENT_ID,
+    GUILD_ID,
+    BOT_OWNER_ID,
+    DP_FFMPEG_PATH
 };

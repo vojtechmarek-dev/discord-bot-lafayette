@@ -3,7 +3,7 @@ import { ExtendedClient } from "../../types";
 import { SoundcloudExtractor } from "discord-player-soundcloud";
 import { config } from "../../config";
 import { AttachmentExtractor } from "@discord-player/extractor";
-import { YoutubeiExtractor, type YoutubeiOptions } from "discord-player-youtubei";
+import { YoutubeiExtractor } from "discord-player-youtubei";
 import { SpotifyExtractor } from "discord-player-spotify";
 
 
@@ -40,7 +40,7 @@ export async function registerExtractors(player: Player): Promise<void> {
         console.log("[EXTRACTORS] Spotify Extractor registered successfully.");
     }
 
-    const youtubeiOptions: YoutubeiOptions = {
+    const ytExt = await player.extractors.register(YoutubeiExtractor, {
         generateWithPoToken: true,
         // WEB streams go through format.decipher() and break when YouTube's base.js
         // cannot be parsed (common in CI and after player updates). ANDROID + no player
@@ -49,15 +49,7 @@ export async function registerExtractors(player: Player): Promise<void> {
         streamOptions: {
             useClient: "TV_EMBEDDED",
         },
-    };
-    if (config.YOUTUBE_OAUTH_TOKENS) {
-        youtubeiOptions.authentication = config.YOUTUBE_OAUTH_TOKENS;
-        console.log("[EXTRACTORS] Youtube: OAuth tokens loaded from YOUTUBE_OAUTH_TOKENS.");
-    } else {
-        console.log("[EXTRACTORS] Youtube: no YOUTUBE_OAUTH_TOKENS; using anonymous InnerTube session.");
-    }
-
-    const ytExt = await player.extractors.register(YoutubeiExtractor, youtubeiOptions);
+    });
     
 
     if (!ytExt) {
