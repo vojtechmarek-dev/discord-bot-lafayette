@@ -1,5 +1,5 @@
 import "dotenv/config";
-import { ChannelType, Client, Events, GatewayIntentBits } from "discord.js";
+import { ChannelType, Client, GatewayIntentBits } from "discord.js";
 import { Player, QueryType } from "discord-player";
 import { YoutubeiExtractor } from "discord-player-youtubei";
 
@@ -15,87 +15,6 @@ const {
 const JOIN_TIMEOUT_MS = 30_000;
 const PLAYBACK_TIMEOUT_MS = 45_000;
 const DEFAULT_QUERY = "https://www.youtube.com/watch?v=dQw4w9WgXcQ";
-const DEFAULT_FALLBACK_VIDEO_ID = "dQw4w9WgXcQ";
-
-/**
- * YOUTUBE_VIDEO handling in discord-player-youtubei runs getBasicInfo + chooseFormat(webm audio).
- * That often throws for some InnerTube clients (e.g. TV_EMBEDDED) and discord-player turns it
- * into an empty SearchResult. Search-by-keyword avoids that path.
- */
-function extractYoutubeVideoId(input) {
-	if (!input || typeof input !== "string") {
-		return null;
-	}
-	try {
-		const url = new URL(input.trim());
-		const v = url.searchParams.get("v");
-		if (v && /^[\w-]{11}$/.test(v)) {
-			return v;
-		}
-		if (url.hostname === "youtu.be") {
-			const id = url.pathname.replace(/^\//, "").split("/")[0];
-			if (id && /^[\w-]{11}$/.test(id)) {
-				return id;
-			}
-		}
-	} catch {
-		if (/^[\w-]{11}$/.test(input.trim())) {
-			return input.trim();
-		}
-	}
-	return null;
-}
-
-async function searchWithYoutubeFallbacks(player, client, primaryQuery) {
-	const requestedBy = client.user;
-	const attempts = [
-		{
-			label: "AUTO (URL or query)",
-			run: () =>
-				player.search(primaryQuery, {
-					searchEngine: QueryType.AUTO,
-					requestedBy,
-				}),
-		},
-		{
-			label: `YOUTUBE_SEARCH (video id ${extractYoutubeVideoId(primaryQuery) || DEFAULT_FALLBACK_VIDEO_ID})`,
-			run: () =>
-				player.search(extractYoutubeVideoId(primaryQuery) || DEFAULT_FALLBACK_VIDEO_ID, {
-					searchEngine: QueryType.YOUTUBE_SEARCH,
-					requestedBy,
-				}),
-		},
-		{
-			label: "ytsearch (keyword)",
-			run: () =>
-				player.search("ytsearch:never gonna give you up rick astley official", {
-					requestedBy,
-				}),
-		},
-	];
-
-	let lastError = null;
-	for (const { label, run } of attempts) {
-		try {
-			const result = await run();
-			if (result && result.hasTracks()) {
-				if (label !== attempts[0].label) {
-					console.log(`[SMOKE] Search ok via fallback: ${label}`);
-				}
-				return result;
-			}
-			console.warn(`[SMOKE] No tracks from strategy: ${label}`);
-		} catch (error) {
-			lastError = error;
-			console.warn(`[SMOKE] Search failed (${label}):`, error);
-		}
-	}
-
-	if (lastError) {
-		throw lastError;
-	}
-	throw new Error("No tracks found for canary query (all search strategies returned empty).");
-}
 
 function requiredEnv(name, value) {
 	if (!value) {
@@ -214,7 +133,7 @@ async function runCanary() {
 					resolve();
 					return;
 				}
-				client.once(Events.ClientReady, () => {
+				client.once("ready", () => {
 					resolve();
 				});
 			}),
@@ -244,7 +163,13 @@ async function runCanary() {
 		}
 
 		console.log(`[SMOKE] Searching query: ${query}`);
-		const searchResult = await searchWithYoutubeFallbacks(player, client, query);
+		const searchResult = await player.search(query, {
+			searchEngine: QueryType.AUTO,
+			requestedBy: client.user,
+		});
+		if (!searchResult || !searchResult.hasTracks()) {
+			throw new Error("No tracks found for canary query.");
+		}
 
 		console.log("[SMOKE] Starting playback...");
 		await withTimeout(
