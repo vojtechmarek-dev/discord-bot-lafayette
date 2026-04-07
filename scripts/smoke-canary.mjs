@@ -2,6 +2,7 @@ import "dotenv/config";
 import { ChannelType, Client, Events, GatewayIntentBits } from "discord.js";
 import { Player, QueryType } from "discord-player";
 import { YoutubeiExtractor } from "discord-player-youtubei";
+import { buildYoutubeiExtractorOptions } from "./youtubei-extractor-options.mjs";
 
 const {
 	DISCORD_TOKEN_CANARY,
@@ -224,11 +225,12 @@ async function runCanary() {
 
 		console.log(`[SMOKE] Client ready as ${client.user.tag}`);
 		console.log("[SMOKE] Registering Youtube extractor...");
-		await player.extractors.register(YoutubeiExtractor, {
-			generateWithPoToken: true,
-			disablePlayer: true,
-			streamOptions: { useClient: "TV_EMBEDDED" },
-		});
+		if (process.env.YOUTUBE_OAUTH_TOKENS?.trim()) {
+			console.log("[SMOKE] YOUTUBE_OAUTH_TOKENS is set (signed-in InnerTube).");
+		} else {
+			console.log("[SMOKE] YOUTUBE_OAUTH_TOKENS not set; anonymous InnerTube.");
+		}
+		await player.extractors.register(YoutubeiExtractor, buildYoutubeiExtractorOptions());
 
 		const guild = await client.guilds.fetch(guildId);
 		if (!guild) {
