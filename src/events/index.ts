@@ -1,10 +1,25 @@
-import { ChatInputCommandInteraction, Client, Events, Interaction } from 'discord.js'; // Import necessary types
+import { ChatInputCommandInteraction, Client, Events, Interaction, SendableChannels } from 'discord.js'; // Import necessary types
 
 // Import your event handler modules
 import { readyEvent } from './ready';
 import { interactionCreateEvent } from './interactionCreate';
 import { Player } from 'discord-player';
-import { BotEvent } from '../types';
+import { BotEvent, PlayerQueueMetadata } from '../types';
+
+function resolvePlayerNotifyChannel(queueMetadata: unknown): SendableChannels | null {
+    if (!queueMetadata || typeof queueMetadata !== 'object') {
+        return null;
+    }
+    const asMeta = queueMetadata as PlayerQueueMetadata;
+    if (asMeta.channel?.isTextBased() && asMeta.channel.isSendable()) {
+        return asMeta.channel;
+    }
+    const asInteraction = queueMetadata as ChatInputCommandInteraction;
+    if (asInteraction.channel?.isTextBased() && asInteraction.channel.isSendable()) {
+        return asInteraction.channel;
+    }
+    return null;
+}
 
 const allEvents: BotEvent[] = [
     readyEvent,
@@ -24,10 +39,9 @@ export function registerEvents(client: Client, player: Player | null): void {
 
     if (player) {
         player.events.on('playerStart', (queue, track) => {
-            // we will later define queue.metadata object while creating the queue
-            const metadata = queue.metadata as { channel?: any, interaction?: ChatInputCommandInteraction }; // Define a type for metadata
-            if (metadata?.channel) {
-                metadata.channel.send(`▶️ Zvuková sekvence inicializována: **${track.title}** od ${track.author}!`).catch(console.error);
+            const channel = resolvePlayerNotifyChannel(queue.metadata);
+            if (channel) {
+                channel.send(`▶️ Zvuková sekvence inicializována: **${track.title}** od ${track.author}!`).catch(console.error);
             }
         });
 
@@ -39,9 +53,9 @@ export function registerEvents(client: Client, player: Player | null): void {
 
         player.events.on('playerError', (queue, error) => {
             console.error(`[${queue.guild.name}] Player error:`, error);
-            const metadata = queue.metadata as { channel?: any };
-            if (metadata?.channel) {
-                metadata.channel.send(`❌ Oops! Something went wrong with the player: ${error.message}`).catch(console.error);
+            const channel = resolvePlayerNotifyChannel(queue.metadata);
+            if (channel) {
+                channel.send(`❌ Oops! Something went wrong with the player: ${error.message}`).catch(console.error);
             }
         });
     }

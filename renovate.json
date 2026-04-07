@@ -55,10 +55,11 @@
         "discord-player",
         "@discord-player/extractor",
         "@distube/ytdl-core",
-        "discord-player-googlevideo",
+        "discord-player-youtubei",
         "discord-player-soundcloud",
         "discord-player-spotify",
-        "ffmpeg-static"
+        "ffmpeg-static",
+        "youtube-dl-exec"
       ],
       "groupName": "voice and media stack",
       "automerge": false,
