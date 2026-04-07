@@ -73,6 +73,7 @@ jobs:
           CANARY_TEXT_CHANNEL_ID: ${{ secrets.CANARY_TEXT_CHANNEL_ID }}
           CANARY_QUERY: ${{ secrets.CANARY_QUERY }}
           DP_FFMPEG_PATH: ${{ secrets.DP_FFMPEG_PATH }}
+          YOUTUBE_OAUTH_TOKENS: ${{ secrets.YOUTUBE_OAUTH_TOKENS }}
         run: npm run smoke:canary
 
   smoke-canary-required:
