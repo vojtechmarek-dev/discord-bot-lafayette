@@ -3,7 +3,7 @@ import { ExtendedClient } from "../../types";
 import { SoundcloudExtractor } from "discord-player-soundcloud";
 import { config } from "../../config";
 import { AttachmentExtractor } from "@discord-player/extractor";
-import { YoutubeiExtractor } from "discord-player-youtubei";
+import { YoutubeSabrExtractor } from 'discord-player-googlevideo';
 import { SpotifyExtractor } from "discord-player-spotify";
 
 
@@ -40,12 +40,7 @@ export async function registerExtractors(player: Player): Promise<void> {
         console.log("[EXTRACTORS] Spotify Extractor registered successfully.");
     }
 
-    const ytExt = await player.extractors.register(YoutubeiExtractor, {
-        generateWithPoToken: true,
-        streamOptions: {
-            useClient: "WEB",
-        },
-    });
+    const ytExt = await player.extractors.register(YoutubeSabrExtractor, {});
     
 
     if (!ytExt) {

@@ -1,7 +1,7 @@
 import "dotenv/config";
 import { ChannelType, Client, GatewayIntentBits } from "discord.js";
 import { Player, QueryType } from "discord-player";
-import { YoutubeiExtractor } from "discord-player-youtubei";
+import { YoutubeSabrExtractor } from "discord-player-googlevideo";
 
 const {
 	DISCORD_TOKEN_CANARY,
@@ -143,10 +143,7 @@ async function runCanary() {
 
 		console.log(`[SMOKE] Client ready as ${client.user.tag}`);
 		console.log("[SMOKE] Registering Youtube extractor...");
-		await player.extractors.register(YoutubeiExtractor, {
-			generateWithPoToken: true,
-			streamOptions: { useClient: "WEB" },
-		});
+		await player.extractors.register(YoutubeSabrExtractor, {});
 
 		const guild = await client.guilds.fetch(guildId);
 		if (!guild) {

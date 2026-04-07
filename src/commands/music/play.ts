@@ -86,7 +86,7 @@ export const playCommand: Command = {
       // The `play` method handles joining the voice channel
       const { track } = await player.play(voiceChannel, searchResult, {
         nodeOptions: {
-          metadata,
+          metadata: interaction,
           volume: 50, 
           leaveOnEmpty: true,
           leaveOnEmptyCooldown: 30000, // 30 seconds
@@ -180,7 +180,7 @@ export const playFileCommand: Command = {
 
             const {track} = await player.play(voiceChannel, searchResult, {
                 nodeOptions: { 
-                  metadata, 
+                  metadata: interaction, 
                   volume: 50, 
                   leaveOnEmpty: true, 
                   leaveOnEmptyCooldown: 300000, 
