@@ -11,6 +11,8 @@ The canary verifies:
 - canary bot can join the configured voice channel
 - `discord-player` emits `playerStart`
 
+The smoke script uses **`discord-player-youtubedlp`** (yt-dlp for metadata + stream), not `discord-player-youtubei` / InnerTube. Signed-in YouTube OAuth (`YOUTUBE_OAUTH_TOKENS`) applies to the **main bot** only; InnerTube from GitHub Actions runners often returns **no search results** even with valid OAuth.
+
 This is designed to catch breakages from frequent dependency updates in:
 
 - `discord.js` / `@discordjs/voice`
@@ -33,7 +35,11 @@ Add these to repository settings:
 - `CANARY_TEXT_CHANNEL_ID`: optional text channel ID for pass/fail notifications
 - `CANARY_QUERY`: media query/URL for playback (optional, defaults in script)
 - `DP_FFMPEG_PATH`: optional, only if your environment requires custom ffmpeg path
-- `YOUTUBE_OAUTH_TOKENS`: optional; full OAuth string from `npx --no discord-player-youtubei` (same value as local `.env` `YOUTUBE_OAUTH_TOKENS`) for signed-in YouTube / InnerTube
+- `YOUTUBE_OAUTH_TOKENS`: optional for the **deployed bot** (`.env` / runtime). **Not used by the smoke workflow** (smoke uses yt-dlp).
+
+## Optional workflow variables
+
+- `SMOKE_YTDLP_DEBUG`: set to `1` in the smoke job `env` for verbose `[YouTubeDlpExtractor]` logs when debugging CI.
 
 ## First Run
 

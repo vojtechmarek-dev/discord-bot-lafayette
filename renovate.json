@@ -56,6 +56,7 @@
         "@discord-player/extractor",
         "@distube/ytdl-core",
         "discord-player-youtubei",
+        "discord-player-youtubedlp",
         "discord-player-soundcloud",
         "discord-player-spotify",
         "ffmpeg-static",

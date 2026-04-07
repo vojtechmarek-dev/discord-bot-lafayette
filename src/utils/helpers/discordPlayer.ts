@@ -42,12 +42,9 @@ export async function registerExtractors(player: Player): Promise<void> {
 
     const youtubeiOptions: YoutubeiOptions = {
         generateWithPoToken: true,
-        // WEB streams go through format.decipher() and break when YouTube's base.js
-        // cannot be parsed (common in CI and after player updates). ANDROID + no player
-        // uses direct URLs and matches discord-player-youtubei guidance for disablePlayer.
         disablePlayer: true,
         streamOptions: {
-            useClient: "TV_EMBEDDED",
+            useClient: "WEB",
         },
     };
     if (config.YOUTUBE_OAUTH_TOKENS) {

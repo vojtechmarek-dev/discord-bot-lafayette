@@ -1,8 +1,10 @@
 import "dotenv/config";
+import { createRequire } from "node:module";
 import { ChannelType, Client, Events, GatewayIntentBits } from "discord.js";
 import { Player, QueryType } from "discord-player";
-import { YoutubeiExtractor } from "discord-player-youtubei";
-import { buildYoutubeiExtractorOptions } from "./youtubei-extractor-options.mjs";
+import { YouTubeDlpExtractor, setFFmpegPath } from "discord-player-youtubedlp";
+
+const require = createRequire(import.meta.url);
 
 const {
 	DISCORD_TOKEN_CANARY,
@@ -19,9 +21,7 @@ const DEFAULT_QUERY = "https://www.youtube.com/watch?v=dQw4w9WgXcQ";
 const DEFAULT_FALLBACK_VIDEO_ID = "dQw4w9WgXcQ";
 
 /**
- * YOUTUBE_VIDEO handling in discord-player-youtubei runs getBasicInfo + chooseFormat(webm audio).
- * That often throws for some InnerTube clients (e.g. TV_EMBEDDED) and discord-player turns it
- * into an empty SearchResult. Search-by-keyword avoids that path.
+ * Search fallbacks when the primary query returns no tracks (timeouts, empty API, etc.).
  */
 function extractYoutubeVideoId(input) {
 	if (!input || typeof input !== "string") {
@@ -156,6 +156,23 @@ async function postCanaryStatus(client, status, details) {
 	}
 }
 
+function configureSmokeFfmpeg() {
+	if (DP_FFMPEG_PATH?.trim()) {
+		setFFmpegPath(DP_FFMPEG_PATH.trim());
+		console.log("[SMOKE] FFmpeg path from DP_FFMPEG_PATH.");
+		return;
+	}
+	try {
+		const staticPath = require("ffmpeg-static");
+		if (staticPath) {
+			setFFmpegPath(staticPath);
+			console.log("[SMOKE] FFmpeg path from ffmpeg-static.");
+		}
+	} catch {
+		console.warn("[SMOKE] No DP_FFMPEG_PATH and ffmpeg-static missing; playback may fail.");
+	}
+}
+
 function isAbortLikeError(error) {
 	if (!error) {
 		return false;
@@ -224,13 +241,16 @@ async function runCanary() {
 		);
 
 		console.log(`[SMOKE] Client ready as ${client.user.tag}`);
-		console.log("[SMOKE] Registering Youtube extractor...");
-		if (process.env.YOUTUBE_OAUTH_TOKENS?.trim()) {
-			console.log("[SMOKE] YOUTUBE_OAUTH_TOKENS is set (signed-in InnerTube).");
-		} else {
-			console.log("[SMOKE] YOUTUBE_OAUTH_TOKENS not set; anonymous InnerTube.");
-		}
-		await player.extractors.register(YoutubeiExtractor, buildYoutubeiExtractorOptions());
+		console.log(
+			"[SMOKE] Registering YouTubeDlpExtractor (yt-dlp). InnerTube/youtubei often returns no results from GitHub/datacenter IPs even with OAuth; smoke targets the voice pipeline reliably."
+		);
+		configureSmokeFfmpeg();
+		await player.extractors.register(YouTubeDlpExtractor, {
+			debug: process.env.SMOKE_YTDLP_DEBUG === "1",
+			searchTimeoutMs: 30_000,
+			videoTimeoutMs: 45_000,
+			ytdlpTimeoutMs: 90_000,
+		});
 
 		const guild = await client.guilds.fetch(guildId);
 		if (!guild) {
