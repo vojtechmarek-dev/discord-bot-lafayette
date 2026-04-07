@@ -42,12 +42,8 @@ export async function registerExtractors(player: Player): Promise<void> {
 
     const ytExt = await player.extractors.register(YoutubeiExtractor, {
         generateWithPoToken: true,
-        // WEB streams go through format.decipher() and break when YouTube's base.js
-        // cannot be parsed (common in CI and after player updates). ANDROID + no player
-        // uses direct URLs and matches discord-player-youtubei guidance for disablePlayer.
-        disablePlayer: true,
         streamOptions: {
-            useClient: "IOS",
+            useClient: "WEB",
         },
     });
     
