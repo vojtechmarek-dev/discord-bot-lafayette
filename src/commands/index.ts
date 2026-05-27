@@ -2,7 +2,7 @@ import { Collection } from "discord.js";
 import { Command } from "../types";
 import { echoCommand, pingCommand, settingsCommand } from "./utility";
 import { pauseCommand, playCommand, playFileCommand, queueCommand, resumeCommand, skipCommand, stopCommand } from "./music";
-import { rollCommand } from "./fun";
+import { rollAdvantageCommand, rollCommand, rollDisadvantageCommand } from "./fun";
 import { drawCommand } from "./fun/draw";
 import { shuffleCommand } from "./fun/shuffe";
 
@@ -17,6 +17,8 @@ const allCommands: Command[] = [
     resumeCommand,
     pauseCommand,
     rollCommand,
+    rollAdvantageCommand,
+    rollDisadvantageCommand,
     echoCommand,
     drawCommand,
     shuffleCommand,

@@ -2,8 +2,9 @@ import { Player } from "discord-player";
 import { ExtendedClient } from "../../types";
 import { SoundcloudExtractor } from "discord-player-soundcloud";
 import { config } from "../../config";
-import { AttachmentExtractor, SpotifyExtractor } from "@discord-player/extractor";
+import { AttachmentExtractor } from "@discord-player/extractor";
 import { YoutubeSabrExtractor } from 'discord-player-googlevideo';
+import { SpotifyExtractor } from "discord-player-spotify";
 
 
 /**
@@ -29,7 +30,9 @@ export async function registerExtractors(player: Player): Promise<void> {
 
 
 
-    const spotifyExt =  await player.extractors.register(SpotifyExtractor, {});
+    const spotifyExt =  await player.extractors.register(SpotifyExtractor, {
+        market: 'CZ',
+    });
 
     if (!spotifyExt) {
         console.error("[EXTRACTORS] Failed to register Spotify Extractor.");
