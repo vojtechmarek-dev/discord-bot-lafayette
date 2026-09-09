@@ -14,7 +14,16 @@ services:
       - DP_FFMPEG_PATH=/usr/bin/ffmpeg
     volumes:
       - ./bot_data:/usr/src/app/data  # persistent storage for bot data - make sure to set proper permissions
-    
+
+    healthcheck:
+      # Bot rewrites /tmp/lafayette-healthy every 60s while Discord WS is READY.
+      # Unhealthy if file missing or older than 2 minutes.
+      test: ["CMD-SHELL", "find /tmp/lafayette-healthy -mmin -2 | grep -q . || exit 1"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 60s
+
     # Resource limits (optional)
     #deploy:
     #  resources:

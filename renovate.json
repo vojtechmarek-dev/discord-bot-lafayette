@@ -9,7 +9,7 @@
   ],
   "rangeStrategy": "replace",
   "dependencyDashboard": true,
-  "prConcurrentLimit": 5,
+  "prConcurrentLimit": 10,
   "packageRules": [
     {
       "matchManagers": [
@@ -55,7 +55,6 @@
         "discord-player",
         "@discord-player/extractor",
         "@distube/ytdl-core",
-        "discord-player-googlevideo",
         "discord-player-soundcloud",
         "discord-player-spotify",
         "ffmpeg-static"
@@ -68,11 +67,37 @@
       ]
     },
     {
+      "description": "YouTube extraction breaks whenever YouTube changes SABR/PO-token handling, so these ship as their own PR, off-schedule, ahead of everything else. Grouping them with the rest of the media stack means one blocked sibling holds back the only fix that matters.",
+      "matchPackageNames": [
+        "discord-player-googlevideo",
+        "youtubei.js",
+        "googlevideo",
+        "bgutils-js",
+        "jsdom"
+      ],
+      "groupName": null,
+      "schedule": [
+        "at any time"
+      ],
+      "prPriority": 10,
+      "automerge": false,
+      "matchUpdateTypes": [
+        "major",
+        "minor",
+        "patch"
+      ],
+      "labels": [
+        "dependencies",
+        "media",
+        "youtube-extractor"
+      ]
+    },
+    {
       "matchUpdateTypes": [
         "major"
       ],
       "automerge": false,
-      "labels": [
+      "addLabels": [
         "dependencies",
         "major"
       ]

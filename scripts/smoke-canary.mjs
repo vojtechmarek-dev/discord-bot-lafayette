@@ -16,6 +16,16 @@ const JOIN_TIMEOUT_MS = 30_000;
 const PLAYBACK_TIMEOUT_MS = 45_000;
 const DEFAULT_QUERY = "https://www.youtube.com/watch?v=dQw4w9WgXcQ";
 
+// `playerStart` fires as soon as an extractor hands discord-player a stream object,
+// which the YouTube SABR extractor does *before* fetching a single media segment.
+// When the segment fetch then 403s, the stream is ended with zero bytes: no
+// `playerError` is emitted and `playerStart` has already fired, so a canary that
+// waits for `playerStart` reports a green run while the bot plays silence. The only
+// honest signal is the queue actually advancing, so require real decoded audio.
+const MIN_AUDIO_MS = 3_000;
+const AUDIO_TIMEOUT_MS = 30_000;
+const AUDIO_POLL_INTERVAL_MS = 500;
+
 function requiredEnv(name, value) {
 	if (!value) {
 		throw new Error(`Missing required environment variable: ${name}`);
@@ -89,6 +99,54 @@ function isAbortLikeError(error) {
 	);
 }
 
+function readStreamTime(queue) {
+	try {
+		return queue?.node?.streamTime ?? 0;
+	} catch {
+		// `node.streamTime` throws once the underlying audio resource is gone.
+		return 0;
+	}
+}
+
+/**
+ * Waits until the queue has actually decoded `MIN_AUDIO_MS` of audio. Rejects if
+ * the stream dies, stalls, or the queue empties first.
+ */
+async function waitForRealAudio(player, guildId, getPlaybackError) {
+	const deadline = Date.now() + AUDIO_TIMEOUT_MS;
+	let lastStreamTime = 0;
+
+	for (;;) {
+		const playbackError = getPlaybackError();
+		if (playbackError) {
+			throw playbackError;
+		}
+
+		const queue = player.nodes.get(guildId);
+		const streamTime = readStreamTime(queue);
+		lastStreamTime = Math.max(lastStreamTime, streamTime);
+
+		if (streamTime >= MIN_AUDIO_MS) {
+			return streamTime;
+		}
+
+		if (!queue || queue.deleted || !queue.currentTrack) {
+			throw new Error(
+				`Playback ended after only ${lastStreamTime}ms of audio (need ${MIN_AUDIO_MS}ms). ` +
+				"Extractor most likely returned an empty stream - check the logs for segment 403s."
+			);
+		}
+
+		if (Date.now() >= deadline) {
+			throw new Error(
+				`Playback stalled at ${lastStreamTime}ms of audio after ${AUDIO_TIMEOUT_MS}ms (need ${MIN_AUDIO_MS}ms).`
+			);
+		}
+
+		await new Promise((resolve) => setTimeout(resolve, AUDIO_POLL_INTERVAL_MS));
+	}
+}
+
 async function runCanary() {
 	const token = requiredEnv("DISCORD_TOKEN_CANARY", DISCORD_TOKEN_CANARY);
 	const guildId = requiredEnv("CANARY_GUILD_ID", CANARY_GUILD_ID);
@@ -109,7 +167,15 @@ async function runCanary() {
 
 	player.events.on("playerStart", (queue, track) => {
 		playbackStarted = true;
-		console.log(`[SMOKE] Playback started in guild ${queue.guild.id}: ${track.cleanTitle}`);
+		console.log(`[SMOKE] Stream handed to voice connection in guild ${queue.guild.id}: ${track.cleanTitle}`);
+	});
+
+	player.events.on("playerFinish", (_queue, track) => {
+		console.log(`[SMOKE] Track finished: ${track.cleanTitle}`);
+	});
+
+	player.events.on("emptyQueue", () => {
+		console.log("[SMOKE] Queue emptied.");
 	});
 
 	player.events.on("playerError", (queue, error) => {
@@ -201,9 +267,12 @@ async function runCanary() {
 			"Wait for playerStart"
 		);
 
+		console.log(`[SMOKE] Verifying real audio (need ${MIN_AUDIO_MS}ms)...`);
+		const streamTimeMs = await waitForRealAudio(player, guildId, () => playbackError);
+
 		smokeStatus = "PASSED";
-		smokeDetails = "Voice join and playback start completed.";
-		console.log("[SMOKE] SUCCESS: voice + playback canary passed.");
+		smokeDetails = `Voice join and ${streamTimeMs}ms of decoded audio confirmed.`;
+		console.log(`[SMOKE] SUCCESS: voice + playback canary passed (${streamTimeMs}ms of audio).`);
 	} catch (error) {
 		smokeStatus = "FAILED";
 		smokeDetails = error instanceof Error ? error.message : String(error);

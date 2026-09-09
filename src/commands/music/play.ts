@@ -86,7 +86,7 @@ export const playCommand: Command = {
       // The `play` method handles joining the voice channel
       const { track } = await player.play(voiceChannel, searchResult, {
         nodeOptions: {
-          metadata: interaction,
+          metadata,
           volume: 50, 
           leaveOnEmpty: true,
           leaveOnEmptyCooldown: 30000, // 30 seconds
@@ -95,7 +95,7 @@ export const playCommand: Command = {
           selfDeaf: true,
         },
       });
-      await interaction.editReply({ content: `▶️ Přehrávám **${track.cleanTitle}**!.`});
+      await interaction.editReply({ content: `⏳ Načítám **${track.cleanTitle}**...` });
 
       // discord-player's events ('playerStart', 'audioTrackAdd') will handle responses.
       // You might want to send a confirmation if it's a playlist.
@@ -114,8 +114,8 @@ export const playCommand: Command = {
             // If something is playing and we added a new different song
             await interaction.editReply({ content: `🎵 **${searchResult.tracks[0].title}** přidána do fronty!`});
           } else if (queue && queue.currentTrack && searchResult.tracks[0].url === queue.currentTrack.url) {
-            // First song, playerStart will handle message. Edit reply to acknowledge.
-            await interaction.editReply({ content: `▶️ Přehrávám **${searchResult.tracks[0].title}**!`});
+            // First song: playerStart confirms real audio before announcing playback.
+            await interaction.editReply({ content: `⏳ Načítám **${searchResult.tracks[0].title}**...` });
           } else {
             // Fallback or if it's the very first song, playerStart will handle it.
             // To avoid "Thinking..." if playerStart is slightly delayed:
@@ -180,7 +180,7 @@ export const playFileCommand: Command = {
 
             const {track} = await player.play(voiceChannel, searchResult, {
                 nodeOptions: { 
-                  metadata: interaction, 
+                  metadata, 
                   volume: 50, 
                   leaveOnEmpty: true, 
                   leaveOnEmptyCooldown: 300000, 

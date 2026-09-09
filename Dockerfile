@@ -65,5 +65,10 @@ RUN chown -R discord-bot:nodejs /usr/src/app
 # Switch to non-root user
 USER discord-bot
 
+# Healthcheck: bot rewrites /tmp/lafayette-healthy every 60s while Discord WS is READY.
+# Fail if file missing or older than 2 minutes.
+HEALTHCHECK --interval=30s --timeout=5s --start-period=60s --retries=3 \
+    CMD find /tmp/lafayette-healthy -mmin -2 | grep -q . || exit 1
+
 # Start the bot
 CMD ["node", "dist/index.js"]
