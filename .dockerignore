@@ -7,3 +7,10 @@ Dockerfile
 .git
 .gitignore
 README.md
+
+# Runtime state. Without these, the builder's `COPY . .` pulls guild-settings.json
+# (which contains real Discord user ids) into a layer that gets pushed to the
+# GitHub Actions build cache. The production stage never copies it, so it does
+# not ship - but it has no business being in a shared cache either.
+data
+bot_data

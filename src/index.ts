@@ -30,7 +30,11 @@ function clientLogin(client: ExtendedClient) {
         })
         .catch(error => {
             console.error('Failed to login:', error);
-            process.exit(1); // Exit if login fails
+            // Tear down through the normal path rather than exiting on the spot:
+            // the player already holds native voice/ffmpeg handles by now, and
+            // calling process.exit() while those are closing trips a libuv
+            // assertion on Windows.
+            void shutdown('login failure', 1);
         });
 
     // Basic error handling
@@ -62,24 +66,25 @@ main().catch(error => {
     // Exit rather than linger: a failure here (player init, extractor
     // registration) leaves a process that answers nothing, and the healthcheck
     // would only notice it after the start period plus three retries.
-    process.exit(1);
+    void shutdown('setup failure', 1);
 });
 
 // --- Graceful shutdown ---
 
 let isShuttingDown = false;
 
-async function shutdown(signal: string): Promise<void> {
+async function shutdown(reason: string, exitCode = 0): Promise<void> {
     if (isShuttingDown) {
         return;
     }
     isShuttingDown = true;
-    console.log(`[SETUP] Lafayette is shutting down (${signal})...`);
+    console.log(`[SETUP] Lafayette is shutting down (${reason})...`);
 
-    // Never let a hung teardown block the container stop.
+    // Hard backstop for a teardown that hangs. Unref'd so it never keeps the
+    // process alive on its own, but it still fires if something else does.
     setTimeout(() => {
         console.error('[SETUP] Shutdown did not finish within 5s, forcing exit.');
-        process.exit(1);
+        process.exit(exitCode || 1);
     }, 5000).unref();
 
     try {
@@ -95,7 +100,11 @@ async function shutdown(signal: string): Promise<void> {
         console.error('[SETUP] Error while destroying the client:', error);
     }
 
-    process.exit(0);
+    // Set the code and let the event loop drain rather than calling
+    // process.exit(): the voice pipeline's native handles are still finishing
+    // their close at this point, and exiting on top of that trips a libuv
+    // assertion (`UV_HANDLE_CLOSING`, src/win/async.c) on Windows.
+    process.exitCode = exitCode;
 }
 
 process.on('SIGINT', () => void shutdown('SIGINT'));

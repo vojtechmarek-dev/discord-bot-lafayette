@@ -2,11 +2,14 @@ import fs from 'node:fs/promises';
 import path from 'node:path';
 import { ColorResolvable, Guild, User } from 'discord.js';
 import { DEFAULT_EMBED_COLOR } from './utils/colorUtils';
+import { DEFAULT_SEARCH_SOURCE, type SearchableSource } from './utils/helpers/queryRouter';
 
 // Define the structure for a single guild's settings
 export interface GuildSettings {
     /** Marks critical successes and failures in roll output. Display only. */
     highlightCrits?: boolean;
+    /** Where a plain-text `/play` query is searched when no source is given. */
+    musicSearchSource?: SearchableSource;
     /**
      * @deprecated Pre-rename name for `highlightCrits`. Still read as a
      * fallback so guilds that set it keep their choice; never written.
@@ -176,6 +179,17 @@ export async function setHighlightCritsSetting(guildId: string | Guild, enabled:
     const id = typeof guildId === 'string' ? guildId : guildId.id;
     await setSetting(id, 'highlightCrits', enabled);
     console.log(`[GuildSettings] Crit highlighting for guild ${id} set to: ${enabled}`);
+}
+
+export function getMusicSearchSource(guildId: string | Guild): SearchableSource {
+    const id = typeof guildId === 'string' ? guildId : guildId.id;
+    return getSetting(id, 'musicSearchSource', DEFAULT_SEARCH_SOURCE);
+}
+
+export async function setMusicSearchSource(guildId: string | Guild, source: SearchableSource): Promise<void> {
+    const id = typeof guildId === 'string' ? guildId : guildId.id;
+    await setSetting(id, 'musicSearchSource', source);
+    console.log(`[GuildSettings] Music search source for guild ${id} set to: ${source}`);
 }
 
 // --- User-Specific Setting Accessors ---

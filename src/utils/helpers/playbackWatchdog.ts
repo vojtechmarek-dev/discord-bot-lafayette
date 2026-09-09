@@ -1,82 +1,157 @@
-import type { GuildQueue } from 'discord-player';
+import type { GuildQueue, Track } from 'discord-player';
+import {
+    CONFIRM_POLL_INTERVAL_MS,
+    CONFIRM_TIMEOUT_MS,
+    MIN_REAL_AUDIO_MS,
+} from './playbackThresholds';
 
 /**
- * Extractors such as `discord-player-googlevideo` hand discord-player a PassThrough
- * *before* the first media segment is fetched. If the fetch then fails (YouTube
- * SABR returns 403 on segments, for example) the stream is simply ended with zero
- * bytes: `playerStart` has already fired, no `playerError` is emitted, and the
- * player silently moves on. To the bot - and to the smoke canary - that looks
- * exactly like a successful playback.
+ * Extractors such as `discord-player-googlevideo` hand discord-player a
+ * PassThrough *before* the first media segment is fetched. If the fetch then
+ * fails (YouTube SABR returns 403 on segments, for example) the stream is
+ * simply ended with zero bytes: `playerStart` has already fired, no
+ * `playerError` is emitted, and the player silently moves on. To the bot - and
+ * to the smoke canary - that looks exactly like a successful playback.
  *
- * The only reliable signal is whether the audio resource actually advanced, so we
- * poll the queue's stream time instead of trusting `playerStart`.
+ * The only reliable signal is whether the audio resource actually advanced, so
+ * we sample it instead of trusting `playerStart`.
+ *
+ * The state machine below is deliberately separated from discord-player: it
+ * consumes a `PlaybackProbe` and knows nothing about queues. That is what makes
+ * it testable without a `GuildQueue` fake, and what lets the tests inject
+ * `now`/`sleep` so they assert on logic rather than on wall-clock timing.
  */
-export interface PlaybackConfirmationOptions {
-  /** Stream time (ms) that must be reached before playback counts as real. */
-  minStreamTimeMs?: number;
-  /** How long to wait for that stream time before declaring the stream dead. */
-  timeoutMs?: number;
-  /** Poll interval (ms). */
-  pollIntervalMs?: number;
+
+export interface PlaybackProbe {
+    /** Decoded audio (ms) produced by the specific track being watched. */
+    streamTimeMs: number;
+    /** Whether that track is still the one mounted on the queue. */
+    isCurrent: boolean;
+    /** Whether the queue is gone or has nothing playing at all. */
+    isDead: boolean;
+    /** A paused queue produces no audio by design. */
+    isPaused: boolean;
 }
+
+export type PlaybackProbeFn = () => PlaybackProbe;
+
+export type PlaybackFailureReason =
+    /** No audio arrived within the timeout. */
+    | 'stalled'
+    /** The queue was torn down or emptied before any audio arrived. */
+    | 'ended'
+    /** A different track took over - this watchdog is stale and must stay quiet. */
+    | 'superseded'
+    /** The caller cancelled. */
+    | 'aborted';
 
 export interface PlaybackConfirmation {
-  confirmed: boolean;
-  streamTimeMs: number;
-  /** Why confirmation failed: 'stalled' (no audio in time) or 'ended' (queue stopped). */
-  reason?: 'stalled' | 'ended';
+    confirmed: boolean;
+    streamTimeMs: number;
+    reason?: PlaybackFailureReason;
 }
 
-export const DEFAULT_MIN_STREAM_TIME_MS = 1_000;
-export const DEFAULT_CONFIRM_TIMEOUT_MS = 12_000;
-const DEFAULT_POLL_INTERVAL_MS = 250;
+export interface PlaybackConfirmationOptions {
+    /** Audio (ms) that must be reached before playback counts as real. */
+    minStreamTimeMs?: number;
+    /** How long to wait for that audio before declaring the stream dead. */
+    timeoutMs?: number;
+    /** Sampling interval (ms). */
+    pollIntervalMs?: number;
+    /** Cancels the wait. */
+    signal?: AbortSignal;
+    /** Injectable clock, for tests. */
+    now?: () => number;
+    /** Injectable delay, for tests. */
+    sleep?: (ms: number) => Promise<void>;
+}
+
+function defaultSleep(ms: number): Promise<void> {
+    return new Promise((resolve) => setTimeout(resolve, ms));
+}
 
 /**
- * Resolves once the queue has actually pushed `minStreamTimeMs` of audio, or once
- * it becomes clear that it never will.
+ * Resolves once the probe reports enough real audio, or once it becomes clear
+ * that it never will.
+ *
+ * A paused queue extends the deadline rather than counting as a stall, because
+ * silence while paused is correct behaviour. That cannot spin forever in
+ * practice: resuming confirms, skipping reports 'superseded', and stopping or
+ * an idle-timeout teardown reports 'ended'. Pass a `signal` if the caller needs
+ * a hard bound.
  */
-export async function confirmPlayback(
-  queue: GuildQueue,
-  options: PlaybackConfirmationOptions = {},
+export async function confirmPlaybackWith(
+    probe: PlaybackProbeFn,
+    options: PlaybackConfirmationOptions = {},
 ): Promise<PlaybackConfirmation> {
-  const minStreamTimeMs = options.minStreamTimeMs ?? DEFAULT_MIN_STREAM_TIME_MS;
-  const timeoutMs = options.timeoutMs ?? DEFAULT_CONFIRM_TIMEOUT_MS;
-  const pollIntervalMs = options.pollIntervalMs ?? DEFAULT_POLL_INTERVAL_MS;
+    const minStreamTimeMs = options.minStreamTimeMs ?? MIN_REAL_AUDIO_MS;
+    const timeoutMs = options.timeoutMs ?? CONFIRM_TIMEOUT_MS;
+    const pollIntervalMs = options.pollIntervalMs ?? CONFIRM_POLL_INTERVAL_MS;
+    const now = options.now ?? Date.now;
+    const sleep = options.sleep ?? defaultSleep;
+    const signal = options.signal;
 
-  let deadline = Date.now() + timeoutMs;
+    let deadline = now() + timeoutMs;
 
-  for (;;) {
-    const streamTimeMs = readStreamTime(queue);
+    for (;;) {
+        const snapshot = probe();
+        const streamTimeMs = snapshot.streamTimeMs;
 
-    if (streamTimeMs >= minStreamTimeMs) {
-      return { confirmed: true, streamTimeMs };
+        if (streamTimeMs >= minStreamTimeMs) {
+            return { confirmed: true, streamTimeMs };
+        }
+
+        if (signal?.aborted) {
+            return { confirmed: false, streamTimeMs, reason: 'aborted' };
+        }
+
+        // Checked before `isCurrent`: a dead queue also has no current track,
+        // and 'ended' is the more accurate of the two answers.
+        if (snapshot.isDead) {
+            return { confirmed: false, streamTimeMs, reason: 'ended' };
+        }
+
+        if (!snapshot.isCurrent) {
+            return { confirmed: false, streamTimeMs, reason: 'superseded' };
+        }
+
+        if (snapshot.isPaused) {
+            deadline = now() + timeoutMs;
+        } else if (now() >= deadline) {
+            return { confirmed: false, streamTimeMs, reason: 'stalled' };
+        }
+
+        await sleep(pollIntervalMs);
     }
-
-    // Queue torn down (or track swapped out) before any audio was produced.
-    if (queue.deleted || !queue.currentTrack) {
-      return { confirmed: false, streamTimeMs, reason: 'ended' };
-    }
-
-    // A paused queue produces no audio by design, so it must not count as a stall.
-    if (queue.node.isPaused()) {
-      deadline = Date.now() + timeoutMs;
-    } else if (Date.now() >= deadline) {
-      return { confirmed: false, streamTimeMs, reason: 'stalled' };
-    }
-
-    await sleep(pollIntervalMs);
-  }
 }
 
-function readStreamTime(queue: GuildQueue): number {
-  try {
-    return queue.node.streamTime ?? 0;
-  } catch {
-    // `node.streamTime` throws once the underlying resource is gone.
-    return 0;
-  }
+/**
+ * Binds a probe to one specific track.
+ *
+ * This is the fix for the stale-watchdog bug. The previous implementation read
+ * `queue.node.streamTime`, which reports whatever resource is mounted *now* -
+ * so a watchdog whose track was skipped inside the confirmation window would
+ * read the *next* track's audio and either announce the wrong title or skip a
+ * track that was playing fine. Reading `track.resource.playbackDuration` is the
+ * same number (`queue.node.streamTime` resolves to exactly this) but scoped
+ * correctly, and comparing ids makes a superseded watchdog detectable.
+ */
+export function trackProbe(queue: GuildQueue, track: Track): PlaybackProbeFn {
+    const watchedId = track.id;
+
+    return () => ({
+        streamTimeMs: track.resource?.playbackDuration ?? 0,
+        isCurrent: queue.currentTrack?.id === watchedId,
+        isDead: queue.deleted || !queue.currentTrack,
+        isPaused: queue.node.isPaused(),
+    });
 }
 
-function sleep(ms: number): Promise<void> {
-  return new Promise((resolve) => setTimeout(resolve, ms));
+/** `confirmPlaybackWith` wired to a real queue and track. */
+export function confirmPlayback(
+    queue: GuildQueue,
+    track: Track,
+    options: PlaybackConfirmationOptions = {},
+): Promise<PlaybackConfirmation> {
+    return confirmPlaybackWith(trackProbe(queue, track), options);
 }

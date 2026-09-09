@@ -4,10 +4,7 @@ import {
   ChatInputCommandInteraction,
   Collection,
   Client,
-  // VoiceBasedChannel, // No longer directly needed for queue type
-  TextBasedChannel, // Keep if you used it for metadata
 } from 'discord.js';
-// import { AudioPlayer, VoiceConnection } from '@discordjs/voice'; // No longer directly needed
 
 // Define the structure of a command
 export interface Command {
@@ -34,10 +31,8 @@ declare module 'discord.js' {
   }
 }
 
-export interface PlayerQueueMetadata {
-    channel?: TextBasedChannel; // Channel where commands are initiated
-    interaction?: ChatInputCommandInteraction; 
-}
+// Queue metadata lives in `utils/helpers/queueFactory` as `QueueContext`, next
+// to the node options it is passed with.
 
 export type Suit = '♠️' | '♥️' | '♦️' | '♣️' | '🃏';
 export type Rank = 'A' | '2' | '3' | '4' | '5' | '6' | '7' | '8' | '9' | '10' | 'J' | 'Q' | 'K' | 'Joker';

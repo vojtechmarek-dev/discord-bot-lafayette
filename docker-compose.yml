@@ -12,6 +12,8 @@ services:
       - GUILD_ID=${GUILD_ID}
       - BOT_OWNER_ID=${BOT_OWNER_ID}
       - DP_FFMPEG_PATH=/usr/bin/ffmpeg
+      # Set to 1 to log which extractor served each query. Off by default.
+      - LAFAYETTE_PLAYER_DEBUG=${LAFAYETTE_PLAYER_DEBUG:-0}
     volumes:
       - ./bot_data:/usr/src/app/data  # persistent storage for bot data - make sure to set proper permissions
 

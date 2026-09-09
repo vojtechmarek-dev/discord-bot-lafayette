@@ -1,7 +1,10 @@
 // src/commands/music/play.ts
 import { SlashCommandBuilder, ChatInputCommandInteraction, GuildMember, ChannelType, VoiceBasedChannel } from 'discord.js';
 import { QueryType, useMainPlayer } from 'discord-player'; // Import from discord-player
-import { Command, ExtendedClient, PlayerQueueMetadata } from '../../types'; // Use your PlayerQueueMetadata if defined
+import { Command, ExtendedClient } from '../../types';
+import { routeQuery, type SearchableSource } from '../../utils/helpers/queryRouter';
+import { buildNodeOptions, refreshQueueMetadata, type QueueContext } from '../../utils/helpers/queueFactory';
+import { getMusicSearchSource } from '../../guildSettingsManager';
 
 async function prePlayValidation(
     interaction: ChatInputCommandInteraction
@@ -40,11 +43,19 @@ async function prePlayValidation(
 export const playCommand: Command = {
   data: new SlashCommandBuilder()
     .setName('play')
-    .setDescription('Přehraje skladbu nebo playlist z YouTube, Spotify, Soundcloud')
+    .setDescription('Přehraje skladbu nebo playlist. Odkaz z YouTube, Spotify či SoundCloudu, nebo název k vyhledání.')
     .addStringOption(option =>
       option.setName('query')
         .setDescription('Název nebo přímý URL odkaz')
-        .setRequired(true)) as SlashCommandBuilder,
+        .setRequired(true))
+    .addStringOption(option =>
+      option.setName('source')
+        .setDescription('Kde hledat, pokud nezadáte odkaz. Výchozí: nastavení serveru.')
+        .addChoices(
+          { name: 'SoundCloud', value: 'soundcloud' },
+          { name: 'YouTube', value: 'youtube' },
+        )
+        .setRequired(false)) as SlashCommandBuilder,
   async execute(interaction: ChatInputCommandInteraction, _client: ExtendedClient) {
 
     const validationResult = await prePlayValidation(interaction);
@@ -54,74 +65,73 @@ export const playCommand: Command = {
 
     const { voiceChannel, player } = validationResult;
 
-    const query = interaction.options.getString('query', true);
-    
-    if (!query) {
+    const rawQuery = interaction.options.getString('query', true);
+
+    if (!rawQuery.trim()) {
       await interaction.reply({ content: 'Musíte zadat název skladby nebo URL k přehrání! Přídavný balíček "čtení myšlenek" nebyl bohužel nainstalován.', ephemeral: true });
       return;
     }
+
+    // Bind the query to a source explicitly. Without this, plain text goes to
+    // whichever greedy extractor sorted first, and never to YouTube - whose
+    // validate() rejects non-URL queries outright.
+    const requestedSource = interaction.options.getString('source') as SearchableSource | null;
+    const routed = routeQuery(rawQuery, {
+      defaultSearchSource: requestedSource ?? getMusicSearchSource(interaction.guildId!),
+    });
+
+    console.log(
+      `[PlayCmd] Routed "${rawQuery}" -> "${routed.query}" ` +
+      `(source=${routed.source}, search=${routed.isSearch}, userPrefixed=${routed.userPrefixed})`,
+    );
 
     // let's defer the interaction as things can take time to process
     await interaction.deferReply();
 
     try {
-
-        const searchResult = await player.search(query, {
+        const searchResult = await player.search(routed.query, {
             requestedBy: interaction.user,
-            searchEngine: QueryType.AUTO, 
+            searchEngine: QueryType.AUTO,
         });
 
         if (!searchResult || !searchResult.hasTracks()) {
-          await interaction.editReply({ content: `❌ Výsledky vyhledávání: nula. Buď "${query}" neexistuje, nebo přehrávač chrání vaše uši. Podezřívám to druhé.` });
+          await interaction.editReply({ content: `❌ Výsledky vyhledávání: nula. Buď "${rawQuery}" neexistuje, nebo přehrávač chrání vaše uši. Podezřívám to druhé.` });
           return;
         }
 
-        // Metadata to pass to the queue - for sending messages from player events
-        const metadata: PlayerQueueMetadata = {
-            channel: interaction.channel ?? undefined, // Store the channel where command was run
-            interaction: interaction // Optionally store interaction for more complex scenarios
+        const context: QueueContext = {
+            channel: interaction.channel ?? undefined,
+            interaction,
         };
 
-      // Play the track or add to queue
-      // The `play` method handles joining the voice channel
-      const { track } = await player.play(voiceChannel, searchResult, {
-        nodeOptions: {
-          metadata,
-          volume: 50, 
-          leaveOnEmpty: true,
-          leaveOnEmptyCooldown: 30000, // 30 seconds
-          leaveOnEnd: true,
-          leaveOnEndCooldown: 30000, // 30 seconds
-          selfDeaf: true,
-        },
-      });
-      await interaction.editReply({ content: `⏳ Načítám **${track.cleanTitle}**...` });
+        // Read before playing: this decides whether the track is starting now or
+        // joining a queue. Checking afterwards is what made the old four-branch
+        // reply ladder race the player.
+        const wasPlaying = Boolean(player.nodes.get(interaction.guildId!)?.currentTrack);
 
-      // discord-player's events ('playerStart', 'audioTrackAdd') will handle responses.
-      // You might want to send a confirmation if it's a playlist.
-      if (searchResult.playlist) {
+        // The `play` method handles joining the voice channel.
+        const { track, queue } = await player.play(voiceChannel, searchResult, {
+          nodeOptions: buildNodeOptions(context),
+        });
+
+        // nodes.create() ignores options for an existing queue, so announcements
+        // would otherwise keep going to whichever channel opened it.
+        refreshQueueMetadata(queue, context);
+
+        if (searchResult.playlist) {
           await interaction.editReply({
-              content: `🎶 Playlist? Váš vkus bude nyní veřejný. Spuštěno. **${searchResult.playlist.title}** zařazen s ${searchResult.tracks.length} skladbami.`,
+            content: `🎶 Playlist? Váš vkus bude nyní veřejný. Spuštěno. **${searchResult.playlist.title}** zařazen s ${searchResult.tracks.length} skladbami.`,
           });
-      } else if (searchResult.tracks.length > 0) {
-          // If it's a single track and the queue was empty, 'playerStart' will fire.
-          // If adding to an existing queue, 'audioTrackAdd' will fire.
-          // So, a simple confirmation here might be good if not the first song.
-          const queue = player.nodes.get(interaction.guildId!);
-          if (queue && queue.tracks.size > 0 && !queue.currentTrack) { // If tracks were added but not playing yet
-            await interaction.editReply({ content: `🎵 **${searchResult.tracks[0].title}** přidána do fronty!`});
-          } else if (queue && queue.currentTrack && searchResult.tracks[0].url !== queue.currentTrack.url) {
-            // If something is playing and we added a new different song
-            await interaction.editReply({ content: `🎵 **${searchResult.tracks[0].title}** přidána do fronty!`});
-          } else if (queue && queue.currentTrack && searchResult.tracks[0].url === queue.currentTrack.url) {
-            // First song: playerStart confirms real audio before announcing playback.
-            await interaction.editReply({ content: `⏳ Načítám **${searchResult.tracks[0].title}**...` });
-          } else {
-            // Fallback or if it's the very first song, playerStart will handle it.
-            // To avoid "Thinking..." if playerStart is slightly delayed:
-            await interaction.editReply({ content: ` Analyzuji zvukový požadavek na **${searchResult.tracks[0].title}**... Můj výpočetní výkon je obrovský, přesto to nějakým způsobem trvá.` });
-          }
-      }
+          return;
+        }
+
+        // `playerStart` owns the "now playing" message, and only once real audio
+        // is confirmed - so this stays deliberately provisional.
+        await interaction.editReply({
+          content: wasPlaying
+            ? `🎵 **${track.cleanTitle}** přidána do fronty.`
+            : `⏳ Načítám **${track.cleanTitle}**...`,
+        });
 
     } catch (error: any) {
       console.error('Error in /play command:', error);
@@ -171,43 +181,39 @@ export const playFileCommand: Command = {
             });
 
             if (!searchResult || !searchResult.hasTracks()) {
-                await interaction.editReply({ content: `❌ Could not process the attached file: ${attachmentInput.name}.` });
+                await interaction.editReply({ content: `❌ Soubor **${attachmentInput.name}** se nepodařilo zpracovat. Tvrdí, že je zvuk. Neshodli jsme se.` });
                 return;
             }
 
-            const metadata: PlayerQueueMetadata = {
+            const context: QueueContext = {
                 channel: interaction.channel ?? undefined,
-                interaction: interaction,
+                interaction,
             };
 
-            const {track} = await player.play(voiceChannel, searchResult, {
-                nodeOptions: { 
-                  metadata, 
-                  volume: 50, 
-                  leaveOnEmpty: true, 
-                  leaveOnEmptyCooldown: 300000, 
-                  leaveOnEnd: true, 
-                  leaveOnEndCooldown: 
-                  300000, 
-                  selfDeaf: true
-                },
+            const wasPlaying = Boolean(player.nodes.get(interaction.guildId!)?.currentTrack);
+
+            // Same shared options as /play. These used to diverge, which was
+            // invisible anyway since only the first command to open a queue got
+            // its options applied.
+            const { track, queue } = await player.play(voiceChannel, searchResult, {
+                nodeOptions: buildNodeOptions(context),
             });
 
-            let replyMessage = `🔍 Processing your request...`;
-            const queue = player.nodes.get(interaction.guildId!); // guildId is checked in prePlayValidation
-            if (queue && queue.currentTrack) {
-                replyMessage = `🎵 **${track.cleanTitle}** added to the queue!`;
-            } else {
-                replyMessage = `▶️ Playing **${track.cleanTitle}**!`;
-            }
-            await interaction.editReply({ content: replyMessage });
+            refreshQueueMetadata(queue, context);
+
+            await interaction.editReply({
+                content: wasPlaying
+                    ? `🎵 **${track.cleanTitle}** přidána do fronty.`
+                    : `⏳ Načítám **${track.cleanTitle}**...`,
+            });
 
         } catch (error: any) {
             console.error(`Error in /playfile command (attachment: ${attachmentInput.name}):`, error);
+            const message = `❌ Ups! Přehrání souboru selhalo: ${error.message}`;
             if (interaction.replied || interaction.deferred) {
-                await interaction.editReply({ content: `❌ Oops! Something went wrong while playing the file: ${error.message}` }).catch(() => {});
+                await interaction.editReply({ content: message }).catch(() => {});
             } else {
-                await interaction.reply({ content: `❌ Oops! Something went wrong while playing the file: ${error.message}`, ephemeral: true }).catch(() => {});
+                await interaction.reply({ content: message, ephemeral: true }).catch(() => {});
             }
         }
     },

@@ -49,14 +49,15 @@
       "automerge": true
     },
     {
+      "description": "@discordjs/voice and @distube/ytdl-core were removed from this group along with the packages themselves: discord-player 7 uses its own discord-voip fork, so @discordjs/voice was never in the audio path yet still gated the smoke canary. mediaplex is here because AttachmentExtractor requires it for probing local files, which is what /playfile and the ambience layer depend on.",
       "matchPackageNames": [
         "discord.js",
-        "@discordjs/voice",
         "discord-player",
         "@discord-player/extractor",
-        "@distube/ytdl-core",
         "discord-player-soundcloud",
         "discord-player-spotify",
+        "mediaplex",
+        "sodium-native",
         "ffmpeg-static"
       ],
       "groupName": "voice and media stack",
