@@ -1,6 +1,6 @@
 // src/commands/music/play.ts
-import { SlashCommandBuilder, ChatInputCommandInteraction, GuildMember, EmbedBuilder, ChannelType, VoiceBasedChannel } from 'discord.js';
-import { QueryResolver, QueryType, useMainPlayer } from 'discord-player'; // Import from discord-player
+import { SlashCommandBuilder, ChatInputCommandInteraction, GuildMember, ChannelType, VoiceBasedChannel } from 'discord.js';
+import { QueryType, useMainPlayer } from 'discord-player'; // Import from discord-player
 import { Command, ExtendedClient, PlayerQueueMetadata } from '../../types'; // Use your PlayerQueueMetadata if defined
 
 async function prePlayValidation(
@@ -45,7 +45,7 @@ export const playCommand: Command = {
       option.setName('query')
         .setDescription('Název nebo přímý URL odkaz')
         .setRequired(true)) as SlashCommandBuilder,
-  async execute(interaction: ChatInputCommandInteraction, client: ExtendedClient) {
+  async execute(interaction: ChatInputCommandInteraction, _client: ExtendedClient) {
 
     const validationResult = await prePlayValidation(interaction);
     if (!validationResult) {
@@ -144,7 +144,7 @@ export const playFileCommand: Command = {
                 .setDescription('The MP3 file to play.')
                 .setRequired(true)
         ) as SlashCommandBuilder,
-    async execute(interaction: ChatInputCommandInteraction, client: ExtendedClient) {
+    async execute(interaction: ChatInputCommandInteraction, _client: ExtendedClient) {
         const validationResult = await prePlayValidation(interaction);
         if (!validationResult) {
           return;
@@ -153,16 +153,18 @@ export const playFileCommand: Command = {
         const { voiceChannel, player } = validationResult;
         const attachmentInput = interaction.options.getAttachment('file', true);
 
+        console.log(`[PlayCmd] Attachment received: ${attachmentInput.name}, type: ${attachmentInput.contentType}, URL: ${attachmentInput.url}`);
+
+        // Must reject before deferReply(), otherwise reply() throws InteractionAlreadyReplied
+        // and the user gets a generic error instead of the reason.
+        if (!(attachmentInput.contentType === 'audio/mpeg' || attachmentInput.name.toLowerCase().endsWith('.mp3'))) {
+            await interaction.reply({ content: '❌ Tento soubor není MP3. Přijímám výhradně MP3. Ano, je to omezení. Ne, omlouvat se za něj nebudu.', ephemeral: true });
+            return;
+        }
+
         await interaction.deferReply();
 
         try {
-
-            console.log(`[PlayCmd] Attachment received: ${attachmentInput.name}, type: ${attachmentInput.contentType}, URL: ${attachmentInput.url}`);
-            if (!(attachmentInput.contentType === 'audio/mpeg' || attachmentInput.name.toLowerCase().endsWith('.mp3'))) {
-                await interaction.reply({ content: '❌ The attached file is not an MP3. Please upload an MP3 file.', ephemeral: true });
-                return;
-            }
-
             const searchResult = await player.search(attachmentInput.url, {
                 requestedBy: interaction.user,
                 searchEngine: QueryType.AUTO

@@ -1,5 +1,14 @@
 import { ColorResolvable, Colors } from 'discord.js'; // Colors enum for predefined
-import { DEFAULT_USER_ROLL_EMBED_COLOR } from '../guildSettingsManager';
+
+/**
+ * The single default embed colour for the whole bot (Discord Blurple).
+ *
+ * This lives here rather than in guildSettingsManager so the dependency runs
+ * one way (settings -> colours). It replaces three former defaults that
+ * disagreed: a hardcoded '#7786F2' in roll.ts, a '#ffffff'
+ * DEFAULT_USER_ROLL_EMBED_COLOR, and PREDEFINED_COLORS[0] in draw.ts.
+ */
+export const DEFAULT_EMBED_COLOR: ColorResolvable = '#5865F2';
 
 /**
  * Attempts to parse a string into a ColorResolvable.
@@ -46,5 +55,5 @@ export const PREDEFINED_COLORS: { name: string; value: ColorResolvable }[] = [
     { name: 'Sunny Yellow', value: Colors.Yellow },   // '#FEE75C'
     { name: 'Cool Blue', value: Colors.Blue },       // '#3498DB'
     { name: 'Deep Purple', value: Colors.Purple },   // '#9B59B6'
-    { name: 'Default (Reset)', value: DEFAULT_USER_ROLL_EMBED_COLOR } // Let user reset to default
+    { name: 'Default (Reset)', value: DEFAULT_EMBED_COLOR } // Let user reset to default
 ];

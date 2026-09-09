@@ -11,13 +11,12 @@ import {
 } from 'discord.js';
 import { Command, ExtendedClient } from '../../types';
 import {
-    getDiceExplodeSetting,
-    setDiceExplodeSetting,
+    getHighlightCritsSetting,
+    setHighlightCritsSetting,
     getUserRollEmbedColor,
     setUserRollEmbedColor,
-    DEFAULT_USER_ROLL_EMBED_COLOR 
 } from '../../guildSettingsManager';
-import { parseColorString, PREDEFINED_COLORS } from '../../utils/colorUtils';
+import { parseColorString, PREDEFINED_COLORS, DEFAULT_EMBED_COLOR } from '../../utils/colorUtils';
 
 export const settingsCommand: Command = {
     data: new SlashCommandBuilder()
@@ -28,8 +27,8 @@ export const settingsCommand: Command = {
                 .setName('guild')
                 .setDescription('Configure server-wide settings (requires Manage Guild permission).')
                 .addBooleanOption(option =>
-                    option.setName('dice_explode')
-                        .setDescription('Enable/disable exploding dice for all rolls in this server.')
+                    option.setName('highlight_crits')
+                        .setDescription('Highlight critical successes and failures in dice roll results.')
                         .setRequired(true)
                 )
         )
@@ -49,7 +48,7 @@ export const settingsCommand: Command = {
                 .setDescription('View current server and your personal settings.')
         ),
 
-    async execute(interaction: ChatInputCommandInteraction, client: ExtendedClient) {
+    async execute(interaction: ChatInputCommandInteraction, _client: ExtendedClient) {
         if (!interaction.guildId) {
             await interaction.reply({ content: 'This command can only be used in a server.', ephemeral: true });
             return;
@@ -69,10 +68,12 @@ export const settingsCommand: Command = {
                 return;
             }
 
-            const explode = interaction.options.getBoolean('dice_explode', true);
-            await setDiceExplodeSetting(interaction.guildId, explode);
+            const highlightCrits = interaction.options.getBoolean('highlight_crits', true);
+            await setHighlightCritsSetting(interaction.guildId, highlightCrits);
             await interaction.reply({
-                content: `🎲 Server-wide dice explosion has been **${explode ? 'ENABLED' : 'DISABLED'}**.`,
+                content: highlightCrits
+                    ? '🎲 Zvýrazňování kritických hodů **zapnuto**. Nyní uvidíte přesně, kdy vám kostky kriticky přejí (nebude to často).'
+                    : '🎲 Zvýrazňování kritických hodů **vypnuto**. Vaše kritické úspěchy zůstanou diskrétní. Prozatím.',
                 ephemeral: true,
             });
         } else if (subcommand === 'me') {
@@ -146,15 +147,15 @@ export const settingsCommand: Command = {
             });
 
         } else if (subcommand === 'view') {
-            const guildDiceExplode = getDiceExplodeSetting(interaction.guildId);
+            const guildHighlightCrits = getHighlightCritsSetting(interaction.guildId);
             const userRollColor = getUserRollEmbedColor(interaction.guildId, user.id);
 
             const settingsEmbed = new EmbedBuilder()
-                .setColor(userRollColor || DEFAULT_USER_ROLL_EMBED_COLOR) // Use user's color or default
+                .setColor(userRollColor || DEFAULT_EMBED_COLOR) // Use user's color or default
                 .setTitle(`${interaction.guild?.name} Bot Settings`)
                 .setDescription(`Showing settings for **${user.displayName}** on this server.`)
                 .addFields(
-                    { name: 'Server-Wide Settings', value: `Dice Explode: **${guildDiceExplode ? 'Enabled' : 'Disabled'}**` },
+                    { name: 'Server-Wide Settings', value: `Crit Highlighting: **${guildHighlightCrits ? 'Enabled' : 'Disabled'}**` },
                     { name: 'Your Personal Settings', value: `Dice Roll Embed Color: \`${userRollColor.toString()}\`` }
                     // Add more settings as they are implemented
                 );

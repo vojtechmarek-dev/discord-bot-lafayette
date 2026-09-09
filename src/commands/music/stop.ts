@@ -6,7 +6,7 @@ export const stopCommand: Command = {
   data: new SlashCommandBuilder()
     .setName('stop')
     .setDescription('Zastaví hudbu, vymaže frontu, a opustí hlasový kanál.'),
-  async execute(interaction: ChatInputCommandInteraction, client: ExtendedClient) {
+  async execute(interaction: ChatInputCommandInteraction, _client: ExtendedClient) {
     if (!interaction.guildId) return;
     const queue = useQueue(interaction.guildId);
 

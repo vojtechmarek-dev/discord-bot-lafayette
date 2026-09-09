@@ -14,7 +14,7 @@ export const shuffleCommand: Command = {
                 .setDescription('Zahrnout žolíky do balíčku? (Výchozí: Ano)')
                 .setRequired(false)
         ) as SlashCommandBuilder,
-    async execute(interaction: ChatInputCommandInteraction, client: ExtendedClient) {
+    async execute(interaction: ChatInputCommandInteraction, _client: ExtendedClient) {
         const displayName = getDisplayName(interaction);
 
         if (!interaction.guildId) {

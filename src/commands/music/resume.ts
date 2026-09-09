@@ -1,5 +1,5 @@
 import { ChatInputCommandInteraction, SlashCommandBuilder } from "discord.js";
-import { useQueue, useTimeline } from "discord-player";
+import { useTimeline } from "discord-player";
 import { Command, ExtendedClient } from "../../types";
 
 
@@ -9,7 +9,7 @@ export const resumeCommand: Command = {
     .setDescription("Obnoví přehrávání pozastavené skladby"),
   async execute(
     interaction: ChatInputCommandInteraction,
-    client: ExtendedClient
+    _client: ExtendedClient
   ) {
     if (!interaction.guild) {
         await interaction.reply({ content: 'This command can only be used in a server.', ephemeral: true });
