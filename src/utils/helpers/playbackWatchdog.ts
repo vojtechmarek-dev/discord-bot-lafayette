@@ -128,23 +128,34 @@ export async function confirmPlaybackWith(
 /**
  * Binds a probe to one specific track.
  *
- * This is the fix for the stale-watchdog bug. The previous implementation read
- * `queue.node.streamTime`, which reports whatever resource is mounted *now* -
- * so a watchdog whose track was skipped inside the confirmation window would
- * read the *next* track's audio and either announce the wrong title or skip a
- * track that was playing fine. Reading `track.resource.playbackDuration` is the
- * same number (`queue.node.streamTime` resolves to exactly this) but scoped
- * correctly, and comparing ids makes a superseded watchdog detectable.
+ * Stream time is read from the queue mounted resource
+ * (`queue.node.streamTime` -> `dispatcher.streamTime` ->
+ * `audioResource.playbackDuration`) rather than from `track.resource`.
+ *
+ * `Track.resource` looks like the correctly scoped option but is not: the only
+ * `Track.setResource()` call in discord-player is on the path that wraps a
+ * pre-built AudioResource into a synthetic DISCORD_PLAYER_BLOB track, so for
+ * anything resolved through an extractor it stays null forever. Reading it
+ * reported 0ms for every track and stalled all of them.
+ *
+ * Correct scoping comes from the id comparison instead: the queue-level time is
+ * reported only while the watched track is the one mounted, and zero otherwise.
+ * That is what stops a stale watchdog from confirming on a *later* track audio,
+ * which is the bug this indirection exists to prevent.
  */
 export function trackProbe(queue: GuildQueue, track: Track): PlaybackProbeFn {
     const watchedId = track.id;
 
-    return () => ({
-        streamTimeMs: track.resource?.playbackDuration ?? 0,
-        isCurrent: queue.currentTrack?.id === watchedId,
-        isDead: queue.deleted || !queue.currentTrack,
-        isPaused: queue.node.isPaused(),
-    });
+    return () => {
+        const isCurrent = queue.currentTrack?.id === watchedId;
+
+        return {
+            streamTimeMs: isCurrent ? (queue.node.streamTime ?? 0) : 0,
+            isCurrent,
+            isDead: queue.deleted || !queue.currentTrack,
+            isPaused: queue.node.isPaused(),
+        };
+    };
 }
 
 /** `confirmPlaybackWith` wired to a real queue and track. */
