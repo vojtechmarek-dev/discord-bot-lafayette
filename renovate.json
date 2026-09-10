@@ -49,7 +49,7 @@
       "automerge": true
     },
     {
-      "description": "@discordjs/voice and @distube/ytdl-core were removed from this group along with the packages themselves: discord-player 7 uses its own discord-voip fork, so @discordjs/voice was never in the audio path yet still gated the smoke canary. mediaplex is here because AttachmentExtractor requires it for probing local files, which is what /playfile and the ambience layer depend on.",
+      "description": "@discordjs/voice and @distube/ytdl-core were removed from this group along with the packages themselves: discord-player 7 uses its own discord-voip fork, so @discordjs/voice was never in the audio path yet still gated the smoke canary. mediaplex is here because AttachmentExtractor requires it for probing local files. undici and @snazzah/davey are direct dependencies only because discord-player and discord-voip require them at runtime while declaring them in no dependency field - they used to arrive transitively via @discordjs/voice, so removing that package broke startup and then voice. Treat them as part of the voice stack: a bad bump breaks playback, so they must not automerge.",
       "matchPackageNames": [
         "discord.js",
         "discord-player",
@@ -58,6 +58,8 @@
         "discord-player-spotify",
         "mediaplex",
         "sodium-native",
+        "undici",
+        "@snazzah/davey",
         "ffmpeg-static"
       ],
       "groupName": "voice and media stack",

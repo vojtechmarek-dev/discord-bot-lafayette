@@ -13,6 +13,26 @@ import {
 } from "./extractors";
 
 /**
+ * DO NOT PRUNE: `undici` and `@snazzah/davey` are direct dependencies that
+ * nothing in this repository imports.
+ *
+ * Both are required at runtime by the discord-player 7 family while being
+ * declared in none of its dependency fields:
+ *
+ *   - discord-player/dist/index.js   `require("undici")`            (top level)
+ *   - discord-voip/dist/index.js     `require("@snazzah/davey")`    (DAVE E2EE,
+ *     which discord-player opts into by passing daveEncryption: true)
+ *
+ * They used to arrive transitively via `@discordjs/voice`. Removing that
+ * package - correctly, since discord-player 7 uses its own discord-voip fork -
+ * took them with it, which broke startup and then broke voice connection.
+ *
+ * `npm run build` cannot catch this: esbuild marks discord-player external and
+ * never resolves its dependencies, so the bundle builds clean either way. Only
+ * actually starting the bot does.
+ */
+
+/**
  * Initializes a new Player instance
  *
  * @param {Client} client
