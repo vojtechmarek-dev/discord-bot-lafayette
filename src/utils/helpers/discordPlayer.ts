@@ -1,6 +1,6 @@
 import fs from "node:fs";
 import path from "node:path";
-import { BaseExtractor, Player } from "discord-player";
+import { BaseExtractor, FFmpeg, Player } from "discord-player";
 import { AttachmentExtractor } from "@discord-player/extractor";
 import { ExtendedClient } from "../../types";
 import { config } from "../../config";
@@ -40,10 +40,59 @@ import {
  */
 export async function initPlayer(client: ExtendedClient): Promise<Player> {
     ensureInnertubeCacheDir();
+    registerConfiguredFfmpeg();
 
     return new Player(client, {
+        // Kept for forward compatibility, but it does nothing today: Player
+        // assigns this to process.env.FFMPEG_PATH, and @discord-player/ffmpeg
+        // reads no environment variables at all. registerConfiguredFfmpeg is
+        // what actually honours the setting.
         ffmpegPath: config.DP_FFMPEG_PATH,
     });
+}
+
+/**
+ * Makes `DP_FFMPEG_PATH` mean something.
+ *
+ * `@discord-player/ffmpeg` resolves ffmpeg from a fixed list - `ffmpeg`,
+ * `./ffmpeg`, `avconv`, `./avconv`, then a few installer modules - and never
+ * consults an environment variable, so the configured path was silently
+ * ignored. It only appeared to work in production because the container
+ * apt-installs ffmpeg and the bare `ffmpeg` lookup succeeds.
+ *
+ * Registered by unshifting rather than via `FFmpeg.addSource()`, which appends:
+ * an explicitly configured binary has to be tried before the PATH lookups, or
+ * a system ffmpeg would quietly win over the operator's choice.
+ *
+ * Note the resolver reports a missing binary as
+ * `Cannot read properties of undefined (reading 'toString')`, because
+ * `spawnSync` returns `{ stdout: null }` on ENOENT instead of throwing.
+ */
+function registerConfiguredFfmpeg(): void {
+    const configured = config.DP_FFMPEG_PATH?.trim();
+    if (!configured) {
+        return;
+    }
+
+    if (!fs.existsSync(configured)) {
+        console.warn(
+            `[SETUP] DP_FFMPEG_PATH is set to "${configured}", but no file exists there. ` +
+            `Falling back to the default ffmpeg lookup.`,
+        );
+        return;
+    }
+
+    if (FFmpeg.sources.some((source) => source.name === configured)) {
+        return;
+    }
+
+    // The cast is upstream's fault, not a shortcut: `FFmpegSource.name` is
+    // documented as "Name or path of the FFmpeg executable" and the resolver
+    // spawns it verbatim (`path = source.name`), but the type is narrowed to a
+    // closed union of the built-in names, so a real path does not fit it.
+    type FFmpegSourceName = (typeof FFmpeg.sources)[number]['name'];
+    FFmpeg.sources.unshift({ name: configured as FFmpegSourceName, module: false });
+    console.log(`[SETUP] Registered configured ffmpeg binary: ${configured}`);
 }
 
 /**
