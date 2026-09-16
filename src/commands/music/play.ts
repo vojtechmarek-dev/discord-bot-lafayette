@@ -136,9 +136,9 @@ export const playCommand: Command = {
     } catch (error: any) {
       console.error('Error in /play command:', error);
       if (interaction.deferred || interaction.replied) {
-        await interaction.editReply({ content: `❌ Ups! Něco se pokazilo: ${error.message}. Nastala chyba. Možná vaše chyba. Ale řekněme, že systémová chyba.` }).catch(() => {});
+        await interaction.editReply({ content: `❌ Ups! Něco se pokazilo: ${error.message}. \n Nastala chyba. Možná vaše chyba. Ale dobře řekněme, že to může být i moje chyba. (...není)` }).catch(() => {});
       } else {
-        await interaction.reply({ content: `❌ Neočekávaná porucha: ${error.message}. Lafayette je zmaten. To se stává přibližně jednou za věčnost.`, ephemeral: true }).catch(() => {});
+        await interaction.reply({ content: `❌ Neočekávaná porucha: ${error.message}. \n Lafayette je zmaten. To se stává přibližně jednou za... věčnost.`, ephemeral: true }).catch(() => {});
       }
     }
   },
