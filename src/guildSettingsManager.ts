@@ -1,208 +1,79 @@
-import fs from 'node:fs/promises';
-import path from 'node:path';
 import { ColorResolvable, Guild, User } from 'discord.js';
 import { DEFAULT_EMBED_COLOR } from './utils/colorUtils';
 import { DEFAULT_SEARCH_SOURCE, type SearchableSource } from './utils/helpers/queryRouter';
+import { getDb } from './persistence';
+import {
+    getGuildSettings,
+    getUserSettings,
+    setHighlightCrits,
+    setMusicSearchSource as writeMusicSearchSource,
+    setRollEmbedColor,
+} from './persistence/settingsRepository';
 
-// Define the structure for a single guild's settings
-export interface GuildSettings {
-    /** Marks critical successes and failures in roll output. Display only. */
-    highlightCrits?: boolean;
-    /** Where a plain-text `/play` query is searched when no source is given. */
-    musicSearchSource?: SearchableSource;
-    /**
-     * @deprecated Pre-rename name for `highlightCrits`. Still read as a
-     * fallback so guilds that set it keep their choice; never written.
-     */
-    diceExplode?: boolean;
-    // language todo
-    userSettings?: {
-        [userId: string]: UserSpecificSettings;
-    };
-}
+/**
+ * Settings accessors, backed by SQLite.
+ *
+ * Every signature here is unchanged from the JSON-backed version, and the
+ * getters are deliberately still synchronous. That is the whole reason
+ * `node:sqlite` was chosen over Redis: an async store would have forced these
+ * to return Promises and rippled through roll.ts, draw.ts, shuffe.ts and
+ * settings.ts. Setters stay `async` so existing `await` call sites compile
+ * untouched, even though the write is now synchronous.
+ */
 
-export interface UserSpecificSettings {
-    rollEmbedColor?: ColorResolvable;
-}
-
-// Define the structure for the entire settings file
-interface AllGuildSettings {
-    [guildId: string]: GuildSettings;
-}
-
-const SETTINGS_FILE_PATH = path.join(__dirname, '..', 'data', 'guild-settings.json'); // Store in a 'data' folder at project root
 const DEFAULT_HIGHLIGHT_CRITS = true;
 
-let guildSettingsCache: AllGuildSettings = {};
-
-// Card deck state moved to guildStateManager
-
-/**
- * Ensures the data directory exists.
- */
-async function ensureDataDirExists(): Promise<void> {
-    try {
-        await fs.mkdir(path.dirname(SETTINGS_FILE_PATH), { recursive: true });
-    } catch (error: any) {
-        if (error.code !== 'EEXIST') { // Ignore if directory already exists
-            console.error('Failed to create data directory for guild settings:', error);
-            throw error; // Re-throw if it's a critical error
-        }
-    }
-}
-
-/**
- * Loads guild settings from the JSON file into the cache.
- * Call this once when the bot starts.
- */
-export async function loadGuildSettings(): Promise<void> {
-    await ensureDataDirExists();
-    try {
-        const data = await fs.readFile(SETTINGS_FILE_PATH, 'utf-8');
-        guildSettingsCache = JSON.parse(data) as AllGuildSettings;
-        console.log('[GuildSettings] Guild settings loaded successfully.');
-    } catch (error: any) {
-        if (error.code === 'ENOENT') { // File not found
-            console.log('[GuildSettings] guild-settings.json not found. Initializing with empty settings.');
-            guildSettingsCache = {};
-            // Optionally save an empty file immediately
-            // await saveGuildSettings();
-        } else {
-            console.error('[GuildSettings] Error loading guild settings:', error);
-            // Decide how to handle: throw, or proceed with empty/default settings?
-            // For robustness, proceeding with empty cache might be okay for some bots.
-            guildSettingsCache = {};
-        }
-    }
-}
- 
-/**
- * Saves the current state of guildSettingsCache to the JSON file.
- * Call this after any setting modification.
- */
-async function saveGuildSettings(): Promise<void> {
-    await ensureDataDirExists();
-    try {
-        const data = JSON.stringify(guildSettingsCache, null, 2); // Pretty print JSON
-        await fs.writeFile(SETTINGS_FILE_PATH, data, 'utf-8');
-        console.log('[GuildSettings] Guild settings saved successfully.');
-    } catch (error) {
-        console.error('[GuildSettings] Error saving guild settings:', error);
-    }
-}
-
-/**
- * Gets a specific setting for a guild, or a default value.
- * @param guildId The ID of the guild.
- * @param key The setting key (e.g., 'diceExplode').
- * @param defaultValue The default value if the setting is not found.
- */
-function getSetting<K extends keyof GuildSettings, T extends GuildSettings[K]>(
-    guildId: string,
-    key: K,
-    defaultValue: NonNullable<T> // Ensure defaultValue is not undefined/null if T can be
-): NonNullable<T> {
-    const settings = guildSettingsCache[guildId];
-    if (settings && typeof settings[key] !== 'undefined') {
-        return settings[key] as NonNullable<T>;
-    }
-    return defaultValue;
-}
-
-/**
- * Sets a specific setting for a guild and saves all settings.
- * @param guildId The ID of the guild.
- * @param key The setting key.
- * @param value The new value for the setting.
- */
-async function setSetting<K extends keyof GuildSettings>(
-    guildId: string,
-    key: K,
-    value: GuildSettings[K]
-): Promise<void> {
-    if (!guildSettingsCache[guildId]) {
-        guildSettingsCache[guildId] = {};
-    }
-    guildSettingsCache[guildId][key] = value;
-    await saveGuildSettings();
-}
-
-/**
- * Gets a specific setting for a user within a guild.
- */
-function getUserSetting<K extends keyof UserSpecificSettings, T extends UserSpecificSettings[K]>(
-    guildId: string,
-    userId: string,
-    key: K,
-    defaultValue: NonNullable<T>
-): NonNullable<T> {
-    const guild = guildSettingsCache[guildId];
-    if (guild && guild.userSettings && guild.userSettings[userId] && typeof guild.userSettings[userId][key] !== 'undefined') {
-        return guild.userSettings[userId][key] as NonNullable<T>;
-    }
-    return defaultValue;
-}
-
-/**
- * Sets a specific setting for a user within a guild and saves.
- */
-async function setUserSetting<K extends keyof UserSpecificSettings>(
-    guildId: string,
-    userId: string,
-    key: K,
-    value: UserSpecificSettings[K]
-): Promise<void> {
-    if (!guildSettingsCache[guildId]) {
-        guildSettingsCache[guildId] = {};
-    }
-    if (!guildSettingsCache[guildId].userSettings) {
-        guildSettingsCache[guildId].userSettings = {};
-    }
-    if (!guildSettingsCache[guildId].userSettings![userId]) { // Use non-null assertion after check
-        guildSettingsCache[guildId].userSettings![userId] = {};
-    }
-    guildSettingsCache[guildId].userSettings![userId][key] = value;
-    await saveGuildSettings();
-}
-
-// --- Specific Setting Accessors ---
+// --- Guild settings ---
 
 export function getHighlightCritsSetting(guildId: string | Guild): boolean {
     const id = typeof guildId === 'string' ? guildId : guildId.id;
-    // Fall back to the pre-rename `diceExplode` key so a guild that configured
-    // this before the rename keeps its choice until the value is rewritten.
-    const legacyValue = getSetting(id, 'diceExplode', DEFAULT_HIGHLIGHT_CRITS);
-    return getSetting(id, 'highlightCrits', legacyValue);
+    const row = getGuildSettings(getDb(), id);
+    return row ? row.highlight_crits === 1 : DEFAULT_HIGHLIGHT_CRITS;
 }
 
 export async function setHighlightCritsSetting(guildId: string | Guild, enabled: boolean): Promise<void> {
     const id = typeof guildId === 'string' ? guildId : guildId.id;
-    await setSetting(id, 'highlightCrits', enabled);
+    setHighlightCrits(getDb(), id, enabled);
     console.log(`[GuildSettings] Crit highlighting for guild ${id} set to: ${enabled}`);
 }
 
 export function getMusicSearchSource(guildId: string | Guild): SearchableSource {
     const id = typeof guildId === 'string' ? guildId : guildId.id;
-    return getSetting(id, 'musicSearchSource', DEFAULT_SEARCH_SOURCE);
+    const row = getGuildSettings(getDb(), id);
+    const stored = row?.music_search_source;
+    return stored === 'youtube' || stored === 'soundcloud' ? stored : DEFAULT_SEARCH_SOURCE;
 }
 
 export async function setMusicSearchSource(guildId: string | Guild, source: SearchableSource): Promise<void> {
     const id = typeof guildId === 'string' ? guildId : guildId.id;
-    await setSetting(id, 'musicSearchSource', source);
+    writeMusicSearchSource(getDb(), id, source);
     console.log(`[GuildSettings] Music search source for guild ${id} set to: ${source}`);
 }
 
-// --- User-Specific Setting Accessors ---
+// --- User-specific settings ---
 
 export function getUserRollEmbedColor(guildId: string | Guild, userId: string | User): ColorResolvable {
     const gId = typeof guildId === 'string' ? guildId : guildId.id;
     const uId = typeof userId === 'string' ? userId : userId.id;
-    return getUserSetting(gId, uId, 'rollEmbedColor', DEFAULT_EMBED_COLOR);
+    const row = getUserSettings(getDb(), gId, uId);
+    return (row?.roll_embed_color as ColorResolvable | undefined) ?? DEFAULT_EMBED_COLOR;
 }
 
-export async function setUserRollEmbedColor(guildId: string | Guild, userId: string | User, color: ColorResolvable): Promise<void> {
+export async function setUserRollEmbedColor(
+    guildId: string | Guild,
+    userId: string | User,
+    color: ColorResolvable,
+): Promise<void> {
     const gId = typeof guildId === 'string' ? guildId : guildId.id;
     const uId = typeof userId === 'string' ? userId : userId.id;
-    await setUserSetting(gId, uId, 'rollEmbedColor', color);
-    console.log(`[UserSettings] Roll embed color for user ${uId} in guild ${gId} set to: ${color}`);
+
+    // The column is TEXT '#RRGGBB'. discord.js colours reach here as either a
+    // string or a Colors enum number, and letting both into one STRICT column
+    // is exactly the mess the legacy JSON had.
+    const stored = typeof color === 'number'
+        ? `#${color.toString(16).padStart(6, '0').toUpperCase()}`
+        : String(color);
+
+    setRollEmbedColor(getDb(), gId, uId, stored);
+    console.log(`[UserSettings] Roll embed color for user ${uId} in guild ${gId} set to: ${stored}`);
 }
