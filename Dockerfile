@@ -39,16 +39,17 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 RUN groupadd -g 1001 nodejs && \
     useradd -u 1001 -g nodejs -m -s /bin/bash discord-bot
 
-# Copy built application and dependencies
-COPY --from=builder /usr/src/app/dist ./dist
-COPY --from=builder /usr/src/app/node_modules ./node_modules
-COPY --from=builder /usr/src/app/package.json ./package.json
+# Copy built application and dependencies.
+# --chown on the COPY itself rather than a later `RUN chown -R`: that RUN
+# rewrites every copied file into a fresh layer, duplicating node_modules and
+# costing ~385MB of image for nothing.
+COPY --from=builder --chown=discord-bot:nodejs /usr/src/app/dist ./dist
+COPY --from=builder --chown=discord-bot:nodejs /usr/src/app/node_modules ./node_modules
+COPY --from=builder --chown=discord-bot:nodejs /usr/src/app/package.json ./package.json
 
 # Verify dist
 RUN ls -la dist/ && test -f dist/index.js
 
-# Change ownership
-RUN chown -R discord-bot:nodejs /usr/src/app
 
 # Switch to non-root user
 USER discord-bot
