@@ -9,7 +9,7 @@
   ],
   "rangeStrategy": "replace",
   "dependencyDashboard": true,
-  "prConcurrentLimit": 5,
+  "prConcurrentLimit": 10,
   "packageRules": [
     {
       "matchManagers": [
@@ -49,15 +49,17 @@
       "automerge": true
     },
     {
+      "description": "@discordjs/voice and @distube/ytdl-core were removed from this group along with the packages themselves: discord-player 7 uses its own discord-voip fork, so @discordjs/voice was never in the audio path yet still gated the smoke canary. mediaplex is here because AttachmentExtractor requires it for probing local files. undici and @snazzah/davey are direct dependencies only because discord-player and discord-voip require them at runtime while declaring them in no dependency field - they used to arrive transitively via @discordjs/voice, so removing that package broke startup and then voice. Treat them as part of the voice stack: a bad bump breaks playback, so they must not automerge.",
       "matchPackageNames": [
         "discord.js",
-        "@discordjs/voice",
         "discord-player",
         "@discord-player/extractor",
-        "@distube/ytdl-core",
-        "discord-player-googlevideo",
         "discord-player-soundcloud",
         "discord-player-spotify",
+        "mediaplex",
+        "sodium-native",
+        "undici",
+        "@snazzah/davey",
         "ffmpeg-static"
       ],
       "groupName": "voice and media stack",
@@ -68,11 +70,37 @@
       ]
     },
     {
+      "description": "YouTube extraction breaks whenever YouTube changes SABR/PO-token handling, so these ship as their own PR, off-schedule, ahead of everything else. Grouping them with the rest of the media stack means one blocked sibling holds back the only fix that matters.",
+      "matchPackageNames": [
+        "discord-player-googlevideo",
+        "youtubei.js",
+        "googlevideo",
+        "bgutils-js",
+        "jsdom"
+      ],
+      "groupName": null,
+      "schedule": [
+        "at any time"
+      ],
+      "prPriority": 10,
+      "automerge": false,
+      "matchUpdateTypes": [
+        "major",
+        "minor",
+        "patch"
+      ],
+      "labels": [
+        "dependencies",
+        "media",
+        "youtube-extractor"
+      ]
+    },
+    {
       "matchUpdateTypes": [
         "major"
       ],
       "automerge": false,
-      "labels": [
+      "addLabels": [
         "dependencies",
         "major"
       ]

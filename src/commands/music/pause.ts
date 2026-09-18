@@ -1,5 +1,5 @@
 import { ChatInputCommandInteraction, SlashCommandBuilder } from "discord.js";
-import { useQueue, useTimeline } from "discord-player";
+import { useTimeline } from "discord-player";
 import { Command, ExtendedClient } from "../../types";
 
 export const pauseCommand: Command = {
@@ -8,7 +8,7 @@ export const pauseCommand: Command = {
     .setDescription("Pozastaví aktuálně hranou skladbu"),
   async execute(
     interaction: ChatInputCommandInteraction,
-    client: ExtendedClient
+    _client: ExtendedClient
   ) {
 
     if (!interaction.guild) {

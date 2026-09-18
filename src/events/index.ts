@@ -1,10 +1,11 @@
-import { ChatInputCommandInteraction, Client, Events, Interaction } from 'discord.js'; // Import necessary types
+import { Client } from 'discord.js';
+import { Player } from 'discord-player';
 
 // Import your event handler modules
 import { readyEvent } from './ready';
 import { interactionCreateEvent } from './interactionCreate';
-import { Player } from 'discord-player';
 import { BotEvent } from '../types';
+import { registerPlayerEvents } from './player';
 
 const allEvents: BotEvent[] = [
     readyEvent,
@@ -12,6 +13,10 @@ const allEvents: BotEvent[] = [
     // ... add other imported event objects here
 ];
 
+/**
+ * Registers the discord.js client events. The discord-player event surface is
+ * its own concern and lives in `./player`.
+ */
 export function registerEvents(client: Client, player: Player | null): void {
     for (const event of allEvents) {
         if (event.once) {
@@ -23,27 +28,8 @@ export function registerEvents(client: Client, player: Player | null): void {
     }
 
     if (player) {
-        player.events.on('playerStart', (queue, track) => {
-            // we will later define queue.metadata object while creating the queue
-            const metadata = queue.metadata as { channel?: any, interaction?: ChatInputCommandInteraction }; // Define a type for metadata
-            if (metadata?.channel) {
-                metadata.channel.send(`▶️ Zvuková sekvence inicializována: **${track.title}** od ${track.author}!`).catch(console.error);
-            }
-        });
-
-        player.events.on('error', (queue, error) => {
-            // Emitted when the player queue encounters error
-            console.log(`General player error event: ${error.message}`);
-            console.log(error);
-        });
-
-        player.events.on('playerError', (queue, error) => {
-            console.error(`[${queue.guild.name}] Player error:`, error);
-            const metadata = queue.metadata as { channel?: any };
-            if (metadata?.channel) {
-                metadata.channel.send(`❌ Oops! Something went wrong with the player: ${error.message}`).catch(console.error);
-            }
-        });
+        registerPlayerEvents(player);
     }
-
 }
+
+export { announce, resolveChannel } from './player/announce';

@@ -3,7 +3,7 @@ import { Card, Command, ExtendedClient } from '../../types';
 import { formatCard, getNewPokerDeck } from '../../utils/deckUtils';
 import { CardDeckState, getCardDeck, setCardDeck } from '../../guildStateManager';
 import { getUserRollEmbedColor } from '../../guildSettingsManager';
-import { PREDEFINED_COLORS } from '../../utils/colorUtils';
+import { DEFAULT_EMBED_COLOR } from '../../utils/colorUtils';
 import { getDisplayName } from '../../utils/interactionUtils';
 
 export const drawCommand: Command = {
@@ -17,7 +17,7 @@ export const drawCommand: Command = {
                 .setMaxValue(52)
                 .setRequired(false)
         ) as SlashCommandBuilder,
-    async execute(interaction: ChatInputCommandInteraction, client: ExtendedClient) {
+    async execute(interaction: ChatInputCommandInteraction, _client: ExtendedClient) {
         const displayName = getDisplayName(interaction);
 
         const deckState = interaction.guildId ? getCardDeck(interaction.guildId, 'poker') : getTempDeckState();
@@ -56,8 +56,9 @@ export const drawCommand: Command = {
 
         const drawnCardsString = drawnCardsThisTurn.map(card => formatCard(card)).join(', ');
 
-        let embedColor: ColorResolvable = PREDEFINED_COLORS[0].value;
-        
+        let embedColor: ColorResolvable = DEFAULT_EMBED_COLOR;
+
+
         if (interaction.guildId) {
             embedColor = getUserRollEmbedColor(interaction.guildId!, interaction.user.id);
         }

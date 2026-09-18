@@ -2,22 +2,13 @@
 FROM node:24-slim AS builder
 WORKDIR /usr/src/app
 
-# Install build dependencies (Debian equivalents of apk add build-base...)
-# canvas needs: libcairo2-dev, libpango1.0-dev, libjpeg-dev, libgif-dev, librsvg2-dev
-RUN apt-get update && apt-get install -y --no-install-recommends \
-    build-essential \
-    python3 \
-    pkg-config \
-    libcairo2-dev \
-    libpango1.0-dev \
-    libjpeg-dev \
-    libgif-dev \
-    librsvg2-dev \
-    && rm -rf /var/lib/apt/lists/*
+# No build toolchain needed. The whole cairo/pango/librsvg stack was here only
+# for `canvas`, which was a direct dependency imported nowhere in the codebase -
+# and it dominated the emulated linux/arm64 build. esbuild ships a prebuilt
+# binary, so nothing left in the tree needs node-gyp.
 
 COPY package*.json ./
 
-# Install dependencies (canvas will likely download a prebuild now)
 RUN npm ci --verbose
 
 COPY . .
@@ -34,17 +25,14 @@ RUN ls -la dist/
 FROM node:24-slim AS production
 WORKDIR /usr/src/app
 
-# Install runtime libraries (Debian equivalents)
-# ffmpeg, cairo, pango, libsodium
+# Runtime libraries. ffmpeg is required by discord-player for transcoding.
+# libsodium23 is kept for one release as a safety net for voice encryption:
+# sodium-native@5 ships its own prebuilt libsodium, so this is probably
+# redundant - drop it only after confirming voice still works without it.
+# The cairo/pango/jpeg/gif/rsvg runtime libs went with `canvas`.
 RUN apt-get update && apt-get install -y --no-install-recommends \
     ffmpeg \
-    libcairo2 \
-    libpango-1.0-0 \
-    libpangocairo-1.0-0 \
     libsodium23 \
-    libjpeg62-turbo \
-    libgif7 \
-    librsvg2-2 \
     && rm -rf /var/lib/apt/lists/*
 
 # Create non-root user (Debian syntax)
@@ -64,6 +52,11 @@ RUN chown -R discord-bot:nodejs /usr/src/app
 
 # Switch to non-root user
 USER discord-bot
+
+# Healthcheck: bot rewrites /tmp/lafayette-healthy every 60s while Discord WS is READY.
+# Fail if file missing or older than 2 minutes.
+HEALTHCHECK --interval=30s --timeout=5s --start-period=60s --retries=3 \
+    CMD find /tmp/lafayette-healthy -mmin -2 | grep -q . || exit 1
 
 # Start the bot
 CMD ["node", "dist/index.js"]

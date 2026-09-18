@@ -11,13 +11,20 @@ import {
 } from 'discord.js';
 import { Command, ExtendedClient } from '../../types';
 import {
-    getDiceExplodeSetting,
-    setDiceExplodeSetting,
+    getHighlightCritsSetting,
+    setHighlightCritsSetting,
+    getMusicSearchSource,
+    setMusicSearchSource,
     getUserRollEmbedColor,
     setUserRollEmbedColor,
-    DEFAULT_USER_ROLL_EMBED_COLOR 
 } from '../../guildSettingsManager';
-import { parseColorString, PREDEFINED_COLORS } from '../../utils/colorUtils';
+import { parseColorString, PREDEFINED_COLORS, DEFAULT_EMBED_COLOR } from '../../utils/colorUtils';
+import type { SearchableSource } from '../../utils/helpers/queryRouter';
+
+const SOURCE_LABELS: Record<SearchableSource, string> = {
+    soundcloud: 'SoundCloud',
+    youtube: 'YouTube',
+};
 
 export const settingsCommand: Command = {
     data: new SlashCommandBuilder()
@@ -27,10 +34,21 @@ export const settingsCommand: Command = {
             subcommand
                 .setName('guild')
                 .setDescription('Configure server-wide settings (requires Manage Guild permission).')
+                // Both optional: setting one should not force you to restate the
+                // other. With neither given, the current values are shown.
                 .addBooleanOption(option =>
-                    option.setName('dice_explode')
-                        .setDescription('Enable/disable exploding dice for all rolls in this server.')
-                        .setRequired(true)
+                    option.setName('highlight_crits')
+                        .setDescription('Highlight critical successes and failures in dice roll results.')
+                        .setRequired(false)
+                )
+                .addStringOption(option =>
+                    option.setName('music_search_source')
+                        .setDescription('Where a plain-text /play query is searched when no link is given.')
+                        .addChoices(
+                            { name: 'SoundCloud (recommended)', value: 'soundcloud' },
+                            { name: 'YouTube', value: 'youtube' },
+                        )
+                        .setRequired(false)
                 )
         )
         .addSubcommand(subcommand =>
@@ -49,7 +67,7 @@ export const settingsCommand: Command = {
                 .setDescription('View current server and your personal settings.')
         ),
 
-    async execute(interaction: ChatInputCommandInteraction, client: ExtendedClient) {
+    async execute(interaction: ChatInputCommandInteraction, _client: ExtendedClient) {
         if (!interaction.guildId) {
             await interaction.reply({ content: 'This command can only be used in a server.', ephemeral: true });
             return;
@@ -69,12 +87,31 @@ export const settingsCommand: Command = {
                 return;
             }
 
-            const explode = interaction.options.getBoolean('dice_explode', true);
-            await setDiceExplodeSetting(interaction.guildId, explode);
-            await interaction.reply({
-                content: `🎲 Server-wide dice explosion has been **${explode ? 'ENABLED' : 'DISABLED'}**.`,
-                ephemeral: true,
-            });
+            const highlightCrits = interaction.options.getBoolean('highlight_crits');
+            const searchSource = interaction.options.getString('music_search_source') as SearchableSource | null;
+            const changes: string[] = [];
+
+            if (highlightCrits !== null) {
+                await setHighlightCritsSetting(interaction.guildId, highlightCrits);
+                changes.push(highlightCrits
+                    ? '🎲 Zvýrazňování kritických hodů **zapnuto**. Nyní uvidíte přesně, kdy vám kostky kriticky přejí (nebude to často).'
+                    : '🎲 Zvýrazňování kritických hodů **vypnuto**. Vaše kritické úspěchy zůstanou diskrétní. Prozatím.');
+            }
+
+            if (searchSource !== null) {
+                await setMusicSearchSource(interaction.guildId, searchSource);
+                changes.push(`🎵 Vyhledávání hudby nyní míří na **${SOURCE_LABELS[searchSource]}**.`);
+            }
+
+            if (changes.length === 0) {
+                changes.push(
+                    '⚙️ Nezměnil jsem nic, protože jste nic nezadal/a. Aktuálně: zvýrazňování kritických hodů ' +
+                    `**${getHighlightCritsSetting(interaction.guildId) ? 'zapnuto' : 'vypnuto'}**, ` +
+                    `vyhledávání hudby **${SOURCE_LABELS[getMusicSearchSource(interaction.guildId)]}**.`,
+                );
+            }
+
+            await interaction.reply({ content: changes.join('\n'), ephemeral: true });
         } else if (subcommand === 'me') {
             const colorInput = interaction.options.getString('roll_color');
             let chosenColor: ColorResolvable | null = null;
@@ -146,15 +183,20 @@ export const settingsCommand: Command = {
             });
 
         } else if (subcommand === 'view') {
-            const guildDiceExplode = getDiceExplodeSetting(interaction.guildId);
+            const guildHighlightCrits = getHighlightCritsSetting(interaction.guildId);
             const userRollColor = getUserRollEmbedColor(interaction.guildId, user.id);
 
             const settingsEmbed = new EmbedBuilder()
-                .setColor(userRollColor || DEFAULT_USER_ROLL_EMBED_COLOR) // Use user's color or default
+                .setColor(userRollColor || DEFAULT_EMBED_COLOR) // Use user's color or default
                 .setTitle(`${interaction.guild?.name} Bot Settings`)
                 .setDescription(`Showing settings for **${user.displayName}** on this server.`)
                 .addFields(
-                    { name: 'Server-Wide Settings', value: `Dice Explode: **${guildDiceExplode ? 'Enabled' : 'Disabled'}**` },
+                    {
+                        name: 'Server-Wide Settings',
+                        value:
+                            `Crit Highlighting: **${guildHighlightCrits ? 'Enabled' : 'Disabled'}**\n` +
+                            `Music Search Source: **${SOURCE_LABELS[getMusicSearchSource(interaction.guildId)]}**`,
+                    },
                     { name: 'Your Personal Settings', value: `Dice Roll Embed Color: \`${userRollColor.toString()}\`` }
                     // Add more settings as they are implemented
                 );

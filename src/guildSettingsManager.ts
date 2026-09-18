@@ -1,12 +1,22 @@
 import fs from 'node:fs/promises';
 import path from 'node:path';
 import { ColorResolvable, Guild, User } from 'discord.js';
+import { DEFAULT_EMBED_COLOR } from './utils/colorUtils';
+import { DEFAULT_SEARCH_SOURCE, type SearchableSource } from './utils/helpers/queryRouter';
 
 // Define the structure for a single guild's settings
 export interface GuildSettings {
+    /** Marks critical successes and failures in roll output. Display only. */
+    highlightCrits?: boolean;
+    /** Where a plain-text `/play` query is searched when no source is given. */
+    musicSearchSource?: SearchableSource;
+    /**
+     * @deprecated Pre-rename name for `highlightCrits`. Still read as a
+     * fallback so guilds that set it keep their choice; never written.
+     */
     diceExplode?: boolean;
     // language todo
-    userSettings?: { 
+    userSettings?: {
         [userId: string]: UserSpecificSettings;
     };
 }
@@ -21,8 +31,7 @@ interface AllGuildSettings {
 }
 
 const SETTINGS_FILE_PATH = path.join(__dirname, '..', 'data', 'guild-settings.json'); // Store in a 'data' folder at project root
-const DEFAULT_DICE_EXPLODE = true;
-export const DEFAULT_USER_ROLL_EMBED_COLOR: ColorResolvable = '#ffffff';
+const DEFAULT_HIGHLIGHT_CRITS = true;
 
 let guildSettingsCache: AllGuildSettings = {};
 
@@ -158,15 +167,29 @@ async function setUserSetting<K extends keyof UserSpecificSettings>(
 
 // --- Specific Setting Accessors ---
 
-export function getDiceExplodeSetting(guildId: string | Guild): boolean {
+export function getHighlightCritsSetting(guildId: string | Guild): boolean {
     const id = typeof guildId === 'string' ? guildId : guildId.id;
-    return getSetting(id, 'diceExplode', DEFAULT_DICE_EXPLODE);
+    // Fall back to the pre-rename `diceExplode` key so a guild that configured
+    // this before the rename keeps its choice until the value is rewritten.
+    const legacyValue = getSetting(id, 'diceExplode', DEFAULT_HIGHLIGHT_CRITS);
+    return getSetting(id, 'highlightCrits', legacyValue);
 }
 
-export async function setDiceExplodeSetting(guildId: string | Guild, enabled: boolean): Promise<void> {
+export async function setHighlightCritsSetting(guildId: string | Guild, enabled: boolean): Promise<void> {
     const id = typeof guildId === 'string' ? guildId : guildId.id;
-    await setSetting(id, 'diceExplode', enabled);
-    console.log(`[GuildSettings] Dice explosion for guild ${id} set to: ${enabled}`);
+    await setSetting(id, 'highlightCrits', enabled);
+    console.log(`[GuildSettings] Crit highlighting for guild ${id} set to: ${enabled}`);
+}
+
+export function getMusicSearchSource(guildId: string | Guild): SearchableSource {
+    const id = typeof guildId === 'string' ? guildId : guildId.id;
+    return getSetting(id, 'musicSearchSource', DEFAULT_SEARCH_SOURCE);
+}
+
+export async function setMusicSearchSource(guildId: string | Guild, source: SearchableSource): Promise<void> {
+    const id = typeof guildId === 'string' ? guildId : guildId.id;
+    await setSetting(id, 'musicSearchSource', source);
+    console.log(`[GuildSettings] Music search source for guild ${id} set to: ${source}`);
 }
 
 // --- User-Specific Setting Accessors ---
@@ -174,7 +197,7 @@ export async function setDiceExplodeSetting(guildId: string | Guild, enabled: bo
 export function getUserRollEmbedColor(guildId: string | Guild, userId: string | User): ColorResolvable {
     const gId = typeof guildId === 'string' ? guildId : guildId.id;
     const uId = typeof userId === 'string' ? userId : userId.id;
-    return getUserSetting(gId, uId, 'rollEmbedColor', DEFAULT_USER_ROLL_EMBED_COLOR);
+    return getUserSetting(gId, uId, 'rollEmbedColor', DEFAULT_EMBED_COLOR);
 }
 
 export async function setUserRollEmbedColor(guildId: string | Guild, userId: string | User, color: ColorResolvable): Promise<void> {
@@ -183,11 +206,3 @@ export async function setUserRollEmbedColor(guildId: string | Guild, userId: str
     await setUserSetting(gId, uId, 'rollEmbedColor', color);
     console.log(`[UserSettings] Roll embed color for user ${uId} in guild ${gId} set to: ${color}`);
 }
-
-// Add more getters/setters for other settings here
-// export function getAnotherSetting(guildId: string): string {
-//     return getSetting(guildId, 'anotherSetting', 'defaultStringValue');
-// }
-// export async function setAnotherSetting(guildId: string, value: string): Promise<void> {
-//     await setSetting(guildId, 'anotherSetting', value);
-// }

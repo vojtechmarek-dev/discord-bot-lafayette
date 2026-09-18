@@ -6,18 +6,14 @@ export const skipCommand: Command = {
   data: new SlashCommandBuilder()
     .setName('skip')
     .setDescription('Přeskočí přehrávanou skladbu.'),
-  async execute(interaction: ChatInputCommandInteraction, client: ExtendedClient) {
+  async execute(interaction: ChatInputCommandInteraction, _client: ExtendedClient) {
     if (!interaction.guildId) return;
     const queue = useQueue(interaction.guildId);
 
-    if (!queue || !queue.isPlaying()) {
-      await interaction.reply({ content: '❌ Nic se nepřehrává!', ephemeral: true });
+    // isPlaying() is false while paused, so guard on actual queue contents instead.
+    if (!queue || (!queue.currentTrack && queue.tracks.size === 0)) {
+      await interaction.reply({ content: '❌ Nic se nepřehrává! Dosáhli jste konce své hudební cesty. Jak... antiklimatické.', ephemeral: true });
       return;
-    }
-
-    if (queue.tracks.size === 0 && !queue.currentTrack) {
-        await interaction.reply({ content: '❌ Není co přeskočit (fronta je prázdná po současné skladbě)! Dosáhli jste konce své hudební cesty. Jak... antiklimatické.', ephemeral: true });
-        return;
     }
 
     const track = queue.currentTrack;

@@ -27,7 +27,11 @@
 
     /* Modules */
     "module": "commonjs",                                /* Specify what module code is generated. */
-    "rootDir": "./src",                                  /* Specify the root folder within your source files. */
+    /* Repo root, not ./src: `include` covers test/ and deploy-commands.ts, which
+       sit outside src/, and TS6 requires rootDir to be explicit when outDir is
+       set. Output layout is irrelevant here — the build is esbuild and tsc only
+       ever runs with --noEmit (`npm run typecheck`). */
+    "rootDir": ".",
     "moduleResolution": "node",                          /* Specify how TypeScript looks up a file from a given module specifier. */
     "ignoreDeprecations": "6.0",                         /* Keep current TS5 toolchain quiet for deprecated option warnings. */
     // "baseUrl": "./",                                  /* Specify the base directory to resolve non-relative module names. */
@@ -111,6 +115,8 @@
     // "skipDefaultLibCheck": true,                      /* Skip type checking .d.ts files that are included with TypeScript. */
     "skipLibCheck": true                                 /* Skip type checking all .d.ts files. */
   },
-  "include": ["src/**/*"],    // Only compile files in the src directory
+  // Typecheck everything CI can break, not just src/: deploy-commands.ts runs on
+  // pushes to `release`, and the test suite was previously unchecked entirely.
+  "include": ["src/**/*", "test/**/*", "deploy-commands.ts"],
   "exclude": ["node_modules", "dist"]
 }

@@ -30,22 +30,24 @@ export const echoCommand: Command = {
                 .setRequired(false)
         ) as SlashCommandBuilder, // Type assertion if needed
 
-    async execute(interaction: ChatInputCommandInteraction, client: ExtendedClient) {
+    async execute(interaction: ChatInputCommandInteraction, _client: ExtendedClient) {
         //const t = getTranslator(interaction); // For potential localized error messages
 
-        // 1. Owner Check
-        if (interaction.user.id !== config.BOT_OWNER_ID) {
+        // 1. Owner Check — the "is it configured at all" branch must come FIRST,
+        // otherwise an unset BOT_OWNER_ID makes every user (owner included) fail
+        // the identity check below and the message here becomes unreachable.
+        if (!config.BOT_OWNER_ID) {
+            console.error("[EchoCommand] BOT_OWNER_ID is not configured. Cannot verify owner.");
             await interaction.reply({
-                content: "Oprávnění odepřeno. Nejste má matka. Ani můj kodér.",
+                content: "Bez jasné identifikace mého tvůrce nemohu tento příkaz provést. Zavádím dočasný režim `Syn bez otce`.",
                 ephemeral: true,
             });
             return;
         }
 
-        if (!config.BOT_OWNER_ID) { // Defensive check if owner ID wasn't set up
-            console.error("[EchoCommand] BOT_OWNER_ID is not configured. Cannot verify owner.");
+        if (interaction.user.id !== config.BOT_OWNER_ID) {
             await interaction.reply({
-                content: "Bez jasné identifikace mého tvůrce nemohu tento příkaz provést. Zavádím dočasný režim `Syn bez otce`.",
+                content: "Oprávnění odepřeno. Nejste má matka. Ani můj kodér.",
                 ephemeral: true,
             });
             return;

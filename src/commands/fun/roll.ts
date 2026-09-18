@@ -1,34 +1,73 @@
-import { SlashCommandBuilder, ChatInputCommandInteraction, EmbedBuilder, ColorResolvable, GuildMember } from 'discord.js';
+import { SlashCommandBuilder, ChatInputCommandInteraction, EmbedBuilder, ColorResolvable } from 'discord.js';
 import { DiceRoll, Parser } from '@dice-roller/rpg-dice-roller';
 import { Command, ExtendedClient } from '../../types';
 import { FudgeDice, PercentileDice, StandardDice } from '@dice-roller/rpg-dice-roller/types/dice';
-import { getDiceExplodeSetting, getUserRollEmbedColor } from '../../guildSettingsManager';
+import { RollResult } from '@dice-roller/rpg-dice-roller/types/results';
+import { getHighlightCritsSetting, getUserRollEmbedColor } from '../../guildSettingsManager';
+import { DEFAULT_EMBED_COLOR } from '../../utils/colorUtils';
 import { getDisplayName } from '../../utils/interactionUtils';
 
-// Helper function to format individual die rolls with bolding for max values
-export function formatIndividualRolls(rollInstance: DiceRoll, explodeInfoEnabled: boolean): string {
+type RolledDice = StandardDice | FudgeDice | PercentileDice;
+
+/** Appended to a die that rolled its maximum. */
+export const CRIT_SUCCESS_MARKER = '!';
+/**
+ * Appended to a die that rolled its minimum. Intentionally empty: the detection
+ * is wired up and tested, but nothing is rendered for now. Set this to a glyph
+ * (e.g. '×') to switch crit-failure marking on — no other change needed.
+ *
+ * Must stay plain text, not an emoji: these values sit inside a markdown code
+ * span, where formatting does not render.
+ */
+export const CRIT_FAILURE_MARKER = '';
+
+/**
+ * Renders a single die result, appending a marker for a critical success (the
+ * die's maximum) or a critical failure (its minimum).
+ *
+ * Compares against `dice.max` / `dice.min` rather than `dice.sides`, because
+ * FudgeDice reports `sides` as the string 'F.2' (with min -1, max 1) — so a
+ * `value == dice.sides` comparison silently never marks a fudge die.
+ *
+ * Maximum is tested first so a degenerate die (`1d1`, where min === max) reads
+ * as a success.
+ */
+function formatRollResult(rolledResult: RollResult, dice: RolledDice, highlightCrits: boolean): string {
+    const rendered = rolledResult.toString();
+
+    if (!highlightCrits) {
+        return rendered;
+    }
+    if (rolledResult.value === dice.max) {
+        return `${rendered}${CRIT_SUCCESS_MARKER}`;
+    }
+    if (rolledResult.value === dice.min) {
+        return `${rendered}${CRIT_FAILURE_MARKER}`;
+    }
+    return rendered;
+}
+
+/** Renders one dice group as `[a,b,c]`, marking crits. */
+function formatDiceGroup(results: RollResult[], dice: RolledDice, highlightCrits: boolean): string {
+    return `[${results.map(result => formatRollResult(result, dice, highlightCrits)).join(',')}]`;
+}
+
+// Helper function to format individual die rolls, marking critical successes/failures
+export function formatIndividualRolls(rollInstance: DiceRoll, highlightCrits: boolean): string {
 
     const rolledDiceParts = rollInstance.rolls.filter(group => typeof group == 'object' && 'rolls' in group);
-    const parsedDiceParts: (StandardDice | FudgeDice | PercentileDice )[] = Parser.parse(rollInstance.notation).filter(group => typeof group == 'object' && 'sides' in group);
+    const parsedDiceParts: RolledDice[] = Parser.parse(rollInstance.notation).filter(group => typeof group == 'object' && 'sides' in group);
 
     if (rolledDiceParts.length == parsedDiceParts.length) {
 
         let formattedString = '';
 
         rolledDiceParts.forEach((rollPart, index) => {
-                const dice = parsedDiceParts[index] as StandardDice | FudgeDice | PercentileDice;
-                const rolledDiceValues = Array.from(rollPart.rolls.values());
-                const rolledValuesString = rolledDiceValues.map(rolledResult => {
-                    // check if rolled highest possible value of the rolled die
-                    if (explodeInfoEnabled && rolledResult.value == dice.sides) {
-                        return `${rolledResult.value}!`;
-                    } else {
-                        return rolledResult.toString();
-                    }
-                }).join(',');
-                formattedString += `[${rolledValuesString}]`;
+            const dice = parsedDiceParts[index];
+            const rolledDiceValues = Array.from(rollPart.rolls.values()) as RollResult[];
+            formattedString += formatDiceGroup(rolledDiceValues, dice, highlightCrits);
         });
-    
+
         return `\`${formattedString}\``;
     } else {
         console.warn(`Warning: Mismatch between rolled parts (${rolledDiceParts.length}) and parsed notation parts (${parsedDiceParts.length}) for notation "${rollInstance.notation}"`);
@@ -36,23 +75,48 @@ export function formatIndividualRolls(rollInstance: DiceRoll, explodeInfoEnabled
     }
 }
 
-export function formatAdvDisRolls(rollInstance: DiceRoll, explodeInfoEnabled: boolean): string {
+/**
+ * Renders an advantage/disadvantage roll: the kept d20 in code ticks, the
+ * dropped one struck through, followed by any extra dice groups riding along in
+ * the same notation (Bless `+1d4`, Bardic Inspiration `+1d6`, Guidance...).
+ *
+ * The keep-pair is always the FIRST dice group. A flat modifier such as `+5` is
+ * not a dice group, so `2d20kh1+5` has one group while `2d20kh1+5+1d4` has two —
+ * which is why this counts dice within the first group rather than counting
+ * groups. Kept vs dropped is decided by `useInTotal`, not by rendered text or by
+ * index: `kh1` drops index 0 while `kl1` drops index 1.
+ */
+export function formatAdvDisRolls(rollInstance: DiceRoll, highlightCrits: boolean): string {
     const rolledDiceParts = rollInstance.rolls.filter(group => typeof group == 'object' && 'rolls' in group);
+    const parsedDiceParts: RolledDice[] = Parser.parse(rollInstance.notation).filter(group => typeof group == 'object' && 'sides' in group);
 
-    if (rolledDiceParts.length != 2) {
-        const rolledDiceValues = Array.from(rolledDiceParts.map(part => Array.from(part.rolls.values())).flat());
-        const droppedDiceIdx = rolledDiceValues.findIndex(result => result.toString().includes('d'));
-        const droppedDieValue = rolledDiceValues[droppedDiceIdx].toString().replace('d', '');
-        let keptDieValue = rolledDiceValues[1 - droppedDiceIdx].toString();
-        if (explodeInfoEnabled && keptDieValue == '20') {
-            keptDieValue = '20!';
-        }
-        return `\`${keptDieValue}\`, ~~${droppedDieValue}~~`;
+    const keepGroup = rolledDiceParts[0];
+    const keepDice = parsedDiceParts[0];
+    const keepResults = keepGroup ? (Array.from(keepGroup.rolls.values()) as RollResult[]) : [];
+    const keptResult = keepResults.find(result => result.useInTotal);
+    const droppedResult = keepResults.find(result => !result.useInTotal);
 
-    } else {
-        console.warn(`Warning: Expected 2 dice parts for notation "${rollInstance.notation}", but got ${rolledDiceParts.length}`);
+    if (!keepDice || keepResults.length !== 2 || !keptResult || !droppedResult) {
+        console.warn(
+            `Warning: expected a two-dice keep-group first for notation "${rollInstance.notation}", ` +
+            `but got ${keepResults.length} dice in the first of ${rolledDiceParts.length} group(s). Falling back to raw output.`
+        );
         return rollInstance.output;
     }
+
+    const kept = formatRollResult(keptResult, keepDice, highlightCrits);
+    let formatted = `\`${kept}\`, ~~${droppedResult.value}~~`;
+
+    for (let index = 1; index < rolledDiceParts.length; index++) {
+        const extraDice = parsedDiceParts[index];
+        if (!extraDice) {
+            continue;
+        }
+        const extraResults = Array.from(rolledDiceParts[index].rolls.values()) as RollResult[];
+        formatted += ` \`${formatDiceGroup(extraResults, extraDice, highlightCrits)}\``;
+    }
+
+    return formatted;
 }
 
 export function splitDiceNotations(diceNotationInput: string): string[] {
@@ -90,7 +154,7 @@ export const rollCommand: Command = {
             option.setName('dice')
                 .setDescription('Požadavky na hození kostek (e.g., 3d10, 2d6+3, 1d100). Default: 1d6')
                 .setRequired(false)) as SlashCommandBuilder,
-    async execute(interaction: ChatInputCommandInteraction, client: ExtendedClient) {
+    async execute(interaction: ChatInputCommandInteraction, _client: ExtendedClient) {
         const user = interaction.user;
         const displayName = getDisplayName(interaction);
 
@@ -110,13 +174,13 @@ export const rollCommand: Command = {
 
             for (const diceNotation of notationsToRoll) {
                 const roll = new DiceRoll(diceNotation);
-                const individualRolledDiceFormatted = formatIndividualRolls(roll, interaction.guildId ? getDiceExplodeSetting(interaction.guildId) : false);
+                const individualRolledDiceFormatted = formatIndividualRolls(roll, interaction.guildId ? getHighlightCritsSetting(interaction.guildId) : false);
                 resultString += `Požadavek: \`[${roll.notation}]\`\n`;
                 rollsString += `${individualRolledDiceFormatted}\n`;
                 totalsString += `**${roll.total}**\n`;
             }
 
-            let embedColor: ColorResolvable = '#7786F2'; // Default Discord color (Blurple)
+            let embedColor: ColorResolvable = DEFAULT_EMBED_COLOR;
 
             // Get the user's preferred embed color for this guild
             if (interaction.guildId) {
@@ -160,8 +224,8 @@ async function executeAdvDisRoll(interaction: ChatInputCommandInteraction, advan
 
     try {
         const roll = new DiceRoll(diceNotation);
-        const individualRolledDiceFormatted = formatAdvDisRolls(roll, interaction.guildId ? getDiceExplodeSetting(interaction.guildId) : false);
-        let embedColor: ColorResolvable = '#7786F2'; // Default Discord color (Blurple)
+        const individualRolledDiceFormatted = formatAdvDisRolls(roll, interaction.guildId ? getHighlightCritsSetting(interaction.guildId) : false);
+        let embedColor: ColorResolvable = DEFAULT_EMBED_COLOR;
 
         // Get the user's preferred embed color for this guild
         if (interaction.guildId) {
@@ -195,7 +259,7 @@ export const rollAdvantageCommand: Command = {
                 .setDescription('Bonus k házení (např. +5)')
                 .setRequired(false)) as SlashCommandBuilder,
 
-    async execute(interaction: ChatInputCommandInteraction, client: ExtendedClient) {
+    async execute(interaction: ChatInputCommandInteraction, _client: ExtendedClient) {
         await executeAdvDisRoll(interaction, true);
     },
 };
@@ -209,7 +273,7 @@ export const rollDisadvantageCommand: Command = {
                 .setDescription('Bonus k házení (např. +5)')
                 .setRequired(false)) as SlashCommandBuilder,
 
-    async execute(interaction: ChatInputCommandInteraction, client: ExtendedClient) {
+    async execute(interaction: ChatInputCommandInteraction, _client: ExtendedClient) {
         await executeAdvDisRoll(interaction, false);
     },
 };
