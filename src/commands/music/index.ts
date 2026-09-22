@@ -4,3 +4,6 @@ export * from "./stop";
 export * from "./queue";
 export * from "./resume";
 export * from "./pause";
+export * from "./loop";
+export * from "./volume";
+export * from "./ambience";

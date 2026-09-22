@@ -2,6 +2,7 @@ import type { GuildQueue, Track } from 'discord-player';
 import { confirmPlayback } from '../../utils/helpers/playbackWatchdog';
 import { CONFIRM_TIMEOUT_MS, MIN_REAL_AUDIO_MS } from '../../utils/helpers/playbackThresholds';
 import { defaultStreamFailureMessage, diagnoseStreamFailure } from '../../utils/helpers/streamDiagnostics';
+import { getAmbienceState } from '../../utils/helpers/queueFactory';
 import { announce } from './announce';
 
 /**
@@ -16,6 +17,19 @@ import { announce } from './announce';
  * announcing the wrong title or skipping somebody else's track.
  */
 export async function handlePlayerStart(queue: GuildQueue, track: Track): Promise<void> {
+    /**
+     * Ambience loops with repeatMode TRACK, so playerStart fires on every
+     * pass. Announcing each one would spam the channel, and the watchdog this
+     * function exists for guards against extractors that resolve a stream
+     * before fetching bytes - which a local file has already ruled out by the
+     * time AttachmentExtractor confirmed the file exists.
+     */
+    const ambience = getAmbienceState(queue);
+    if (ambience) {
+        console.log(`[Player] Ambience loop: ${ambience.label}`);
+        return;
+    }
+
     const result = await confirmPlayback(queue, track);
 
     if (result.confirmed) {

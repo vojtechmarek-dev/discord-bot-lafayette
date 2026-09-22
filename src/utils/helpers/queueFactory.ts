@@ -1,11 +1,21 @@
 import type { ChatInputCommandInteraction, TextBasedChannel } from 'discord.js';
 import type { GuildNodeCreateOptions, GuildQueue } from 'discord-player';
 
+/** Set while the queue is looping an ambience bed rather than playing music. */
+export interface AmbienceState {
+    slug: string;
+    label: string;
+}
+
 export interface QueueContext {
     /** Channel the command came from, used for playback announcements. */
     channel?: TextBasedChannel;
     interaction?: ChatInputCommandInteraction;
+    ambience?: AmbienceState;
 }
+
+/** Ambience sits under conversation, so it starts quieter than music. */
+export const AMBIENCE_VOLUME = 20;
 
 /**
  * One shared set of queue options for every play path.
@@ -62,7 +72,18 @@ export function refreshQueueMetadata(queue: GuildQueue | null | undefined, conte
     queue.setMetadata(context);
 }
 
-/** `BASE_NODE_OPTIONS` plus the per-invocation metadata. */
-export function buildNodeOptions(context: QueueContext): GuildNodeCreateOptions<QueueContext> {
-    return { ...BASE_NODE_OPTIONS, metadata: context };
+/** Reads the ambience marker off a queue, if it is in ambience mode. */
+export function getAmbienceState(queue: GuildQueue | null | undefined): AmbienceState | null {
+    if (!queue || queue.deleted) {
+        return null;
+    }
+    return (queue.metadata as QueueContext | null)?.ambience ?? null;
+}
+
+/** `BASE_NODE_OPTIONS` plus the per-invocation metadata and volume. */
+export function buildNodeOptions(
+    context: QueueContext,
+    volume: number = BASE_NODE_OPTIONS.volume as number,
+): GuildNodeCreateOptions<QueueContext> {
+    return { ...BASE_NODE_OPTIONS, volume, metadata: context };
 }

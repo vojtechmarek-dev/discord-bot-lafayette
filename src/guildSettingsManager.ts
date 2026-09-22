@@ -7,6 +7,7 @@ import {
     getUserSettings,
     setHighlightCrits,
     setMusicSearchSource as writeMusicSearchSource,
+    setMusicVolume as writeMusicVolume,
     setRollEmbedColor,
 } from './persistence/settingsRepository';
 
@@ -48,6 +49,20 @@ export async function setMusicSearchSource(guildId: string | Guild, source: Sear
     const id = typeof guildId === 'string' ? guildId : guildId.id;
     writeMusicSearchSource(getDb(), id, source);
     console.log(`[GuildSettings] Music search source for guild ${id} set to: ${source}`);
+}
+
+export const DEFAULT_MUSIC_VOLUME = 50;
+
+export function getMusicVolume(guildId: string | Guild): number {
+    const id = typeof guildId === 'string' ? guildId : guildId.id;
+    const row = getGuildSettings(getDb(), id);
+    return row?.music_volume ?? DEFAULT_MUSIC_VOLUME;
+}
+
+export async function setMusicVolume(guildId: string | Guild, volume: number): Promise<void> {
+    const id = typeof guildId === 'string' ? guildId : guildId.id;
+    writeMusicVolume(getDb(), id, volume);
+    console.log(`[GuildSettings] Music volume for guild ${id} set to: ${volume}`);
 }
 
 // --- User-specific settings ---
