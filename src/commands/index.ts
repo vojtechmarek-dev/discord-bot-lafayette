@@ -2,9 +2,7 @@ import { Collection } from "discord.js";
 import { Command } from "../types";
 import { echoCommand, pingCommand, settingsCommand } from "./utility";
 import { ambienceCommand, loopCommand, pauseCommand, playCommand, playFileCommand, queueCommand, resumeCommand, skipCommand, stopCommand, volumeCommand } from "./music";
-import { rollAdvantageCommand, rollCommand, rollDisadvantageCommand } from "./fun";
-import { drawCommand } from "./fun/draw";
-import { shuffleCommand } from "./fun/shuffe";
+import { drawCommand, rollAdvantageCommand, rollCommand, rollDisadvantageCommand, shuffleCommand } from "./fun";
 
 // Create an array of all command objects
 const allCommands: Command[] = [
