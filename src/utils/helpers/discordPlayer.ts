@@ -48,6 +48,23 @@ export async function initPlayer(client: ExtendedClient): Promise<Player> {
         // reads no environment variables at all. registerConfiguredFfmpeg is
         // what actually honours the setting.
         ffmpegPath: config.DP_FFMPEG_PATH,
+
+        /**
+         * Defaults to true upstream, which corrupts .opus playback.
+         *
+         * AttachmentExtractor hands the player `{ stream, $fmt }` where $fmt is
+         * the mime subtype, so an Ogg-Opus file detected as `audio/opus` yields
+         * $fmt === 'opus'. discord-player then matches that against
+         * StreamType.Opus (also 'opus') and pipes the file into OpusDecoder
+         * with NO demuxer - only StreamType.OggOpus ('ogg/opus') gets the
+         * OggDemuxer. The decoder is handed OggS page headers instead of bare
+         * packets and fails with 'The compressed data passed is corrupted'.
+         *
+         * Routing through ffmpeg instead costs a cheap transcode and makes every
+         * container work. It only affects local files: network extractors return
+         * a plain Readable, which is not demuxable, so they already used ffmpeg.
+         */
+        skipFFmpeg: false,
     });
 }
 

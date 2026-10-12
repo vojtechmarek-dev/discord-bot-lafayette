@@ -196,8 +196,8 @@ docker compose up -d
 data volume rather than baked into the image, so you can add your own without a rebuild -
 the bot rescans the directory on every command, so no restart is needed either.
 
-- Supported: `.opus`, `.ogg`, `.mp3`, `.wav`, `.flac`, `.m4a`, `.webm`. `.opus` is the
-  cheapest for Discord, since it needs no transcoding.
+- Supported: `.opus`, `.ogg`, `.mp3`, `.wav`, `.flac`, `.m4a`, `.webm`. All of them are
+  transcoded through ffmpeg on the way out, so pick on file size rather than CPU.
 - The file name becomes the preset: `tavern-night.opus` is selectable as `tavern-night`
   and displayed as "Tavern Night".
 - Ambience plays on the same voice connection as music, so it cannot layer underneath a
