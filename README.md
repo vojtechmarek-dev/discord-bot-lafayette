@@ -59,6 +59,12 @@ Lafayette is a multi-functional Discord bot built with Node.js, TypeScript, and 
   Resume paused music.
 - `/pause`  
   Pause the currently playing track.
+- `/loop <off|track|queue>`  
+  Set repeat mode. Required for looping ambience beds.
+- `/volume [0-100]`  
+  Set playback volume for the server. Persisted; omit the value to read it back.
+- `/ambience play|stop|list`  
+  Loop a local ambience bed from `data/ambience/`. See Ambience below.
 
 ### 🛠️ Utility
 - `/ping`  
@@ -179,8 +185,24 @@ docker compose up -d
 
 ## Data Storage
 
-- `data/guild-settings.json`: Persistent per-guild settings (e.g., dice explode, user roll color).
-- `data/guild-state.json`: Persistent per-guild runtime state for card decks.
+- `data/lafayette.db`: SQLite database holding guild settings, per-user settings and card decks.
+  Created and migrated automatically on first start. Legacy `guild-settings.json` and
+  `guild-state.json` are imported once and then renamed to `*.imported-<timestamp>`.
+- `data/ambience/`: Ambience beds (see below). Operator-managed, never written by the bot.
+
+### Ambience
+
+`/ambience` loops audio files placed in `data/ambience/`. They are read from the mounted
+data volume rather than baked into the image, so you can add your own without a rebuild -
+the bot rescans the directory on every command, so no restart is needed either.
+
+- Supported: `.opus`, `.ogg`, `.mp3`, `.wav`, `.flac`, `.m4a`, `.webm`. `.opus` is the
+  cheapest for Discord, since it needs no transcoding.
+- The file name becomes the preset: `tavern-night.opus` is selectable as `tavern-night`
+  and displayed as "Tavern Night".
+- Ambience plays on the same voice connection as music, so it cannot layer underneath a
+  song. Starting it while music plays is refused rather than silently stopping the music.
+- This path touches no extractor, so it keeps working during a YouTube outage.
 
 ## Background Jobs
 

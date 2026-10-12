@@ -25,8 +25,8 @@ export const shuffleCommand: Command = {
         const includeJokers = interaction.options.getBoolean('jokers') ?? true;
         const deckType = 'poker';
 
-        const newDeckState = createNewShuffledDeckState(displayName, deckType, { includeJokers });
-        await setCardDeck(interaction.guildId, newDeckState.keys().next().value!, newDeckState.values().next().value!);
+        const newDeckState = createNewShuffledDeckState(displayName, { includeJokers });
+        await setCardDeck(interaction.guildId, deckType, newDeckState);
 
         const deckDescription = includeJokers
             ? "nový balíček o 52 kartách s žolíky"
@@ -35,7 +35,7 @@ export const shuffleCommand: Command = {
         const embed = new EmbedBuilder()
             .setColor(getUserRollEmbedColor(interaction.guildId, interaction.user.id))
             .setTitle('🃏 Balíček byl promíchán!')
-            .setDescription(`${displayName} promíchal/a ${deckDescription}.\n**${newDeckState.get(deckType)?.remainingCards.length}** karet připraveno. Balíček bude dostupný po dobu 7 dní.`)
+            .setDescription(`${displayName} promíchal/a ${deckDescription}.\n**${newDeckState.remainingCards.length}** karet připraveno. Balíček bude dostupný po dobu 7 dní.`)
             .setFooter({ text: 'Použij /draw k vytáhnutí karty.' });
 
         await interaction.reply({ embeds: [embed] });

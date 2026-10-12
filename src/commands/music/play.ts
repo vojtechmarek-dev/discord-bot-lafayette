@@ -4,7 +4,7 @@ import { QueryType, useMainPlayer } from 'discord-player'; // Import from discor
 import { Command, ExtendedClient } from '../../types';
 import { routeQuery, type SearchableSource } from '../../utils/helpers/queryRouter';
 import { buildNodeOptions, refreshQueueMetadata, type QueueContext } from '../../utils/helpers/queueFactory';
-import { getMusicSearchSource } from '../../guildSettingsManager';
+import { getMusicSearchSource, getMusicVolume } from '../../guildSettingsManager';
 
 async function prePlayValidation(
     interaction: ChatInputCommandInteraction
@@ -111,7 +111,7 @@ export const playCommand: Command = {
 
         // The `play` method handles joining the voice channel.
         const { track, queue } = await player.play(voiceChannel, searchResult, {
-          nodeOptions: buildNodeOptions(context),
+          nodeOptions: buildNodeOptions(context, getMusicVolume(interaction.guildId!)),
         });
 
         // nodes.create() ignores options for an existing queue, so announcements
@@ -196,7 +196,7 @@ export const playFileCommand: Command = {
             // invisible anyway since only the first command to open a queue got
             // its options applied.
             const { track, queue } = await player.play(voiceChannel, searchResult, {
-                nodeOptions: buildNodeOptions(context),
+                nodeOptions: buildNodeOptions(context, getMusicVolume(interaction.guildId!)),
             });
 
             refreshQueueMetadata(queue, context);

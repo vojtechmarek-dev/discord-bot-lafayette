@@ -2,6 +2,7 @@ import {
   SlashCommandBuilder,
   SlashCommandSubcommandsOnlyBuilder,
   ChatInputCommandInteraction,
+  AutocompleteInteraction,
   Collection,
   Client,
 } from 'discord.js';
@@ -10,6 +11,14 @@ import {
 export interface Command {
   data: Omit<SlashCommandBuilder, "addSubcommand" | "addSubcommandGroup"> | SlashCommandSubcommandsOnlyBuilder;
   execute: (interaction: ChatInputCommandInteraction, client: ExtendedClient) => Promise<void>;
+  /**
+   * Optional suggestion handler for options declared with setAutocomplete(true).
+   *
+   * Autocomplete arrives through interactionCreate like any other interaction,
+   * but needs no persistence, no custom ids and no collectors - so it is the one
+   * slice of component routing that can land on its own.
+   */
+  autocomplete?: (interaction: AutocompleteInteraction, client: ExtendedClient) => Promise<void>;
 }
 
 export interface BotEvent {

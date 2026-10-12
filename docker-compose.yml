@@ -14,6 +14,10 @@ services:
       - DP_FFMPEG_PATH=/usr/bin/ffmpeg
       # Set to 1 to log which extractor served each query. Off by default.
       - LAFAYETTE_PLAYER_DEBUG=${LAFAYETTE_PLAYER_DEBUG:-0}
+      # Where lafayette.db lives. Matches the volume mount below.
+      - LAFAYETTE_DATA_DIR=/usr/src/app/data
+      # WAL needs working POSIX locking; set TRUNCATE if bot_data ever moves to NFS/SMB.
+      - LAFAYETTE_SQLITE_JOURNAL_MODE=${LAFAYETTE_SQLITE_JOURNAL_MODE:-WAL}
     volumes:
       - ./bot_data:/usr/src/app/data  # persistent storage for bot data - make sure to set proper permissions
 

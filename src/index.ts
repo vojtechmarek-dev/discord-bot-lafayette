@@ -3,8 +3,7 @@ import { Player } from 'discord-player';
 import { config } from './config';
 import commandsCollection from './commands';
 import { initPlayer, registerExtractors } from './utils/helpers/discordPlayer';
-import { loadGuildSettings } from './guildSettingsManager';
-import { loadGuildState } from './guildStateManager';
+import { closePersistence, initPersistence } from './persistence';
 import { registerEvents } from './events';
 import { ExtendedClient } from './types';
 
@@ -44,9 +43,8 @@ function clientLogin(client: ExtendedClient) {
 
 
 async function main() {    
-    // --- Load Guild Settings & State ---
-    await loadGuildSettings();
-    await loadGuildState();
+    // --- Open the database (migrates, and imports legacy JSON on first run) ---
+    await initPersistence();
 
     // --- Assign Commands to Client ---
     client.commands = commandsCollection; // Assign the pre-populated collection
@@ -98,6 +96,14 @@ async function shutdown(reason: string, exitCode = 0): Promise<void> {
         await client.destroy();
     } catch (error) {
         console.error('[SETUP] Error while destroying the client:', error);
+    }
+
+    try {
+        // Checkpoints the WAL and releases the file. Without this a stop can
+        // leave -wal/-shm behind holding the most recent commits.
+        closePersistence();
+    } catch (error) {
+        console.error('[SETUP] Error while closing the database:', error);
     }
 
     // Set the code and let the event loop drain rather than calling

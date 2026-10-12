@@ -1,4 +1,4 @@
-import { Card, DeckType, Rank, Suit } from "../types";
+import { Card, Rank, Suit } from "../types";
 import { CardDeckState } from "../guildStateManager";
 
 export const SUITS_STANDARD: Suit[] = ['♠️', '♥️', '♦️', '♣️'];
@@ -73,27 +73,42 @@ export function getNewPokerDeck(includeJokers: boolean = true): Card[] {
 
 /**
  * Creates a new, shuffled poker deck state.
- * @param shufflerId User ID of the person shuffling.
- * @param deckOptions Options for creating the deck (e.g., includeJokers).
+ *
+ * Returns the state directly. It used to return a single-entry
+ * `Map<DeckType, CardDeckState>`, which forced callers into
+ * `newDeckState.keys().next().value!` just to read back the type they had
+ * passed in - scaffolding for multiple deck types that never arrived.
+ *
+ * @param shufflerId Display name of the person shuffling.
+ * @param deckOptions Options for creating the deck (e.g. includeJokers).
  */
 export function createNewShuffledDeckState(
     shufflerId: string,
-    type: DeckType = 'poker',
-    deckOptions: { includeJokers?: boolean } = { includeJokers: true } // Default to include Jokers
-    ): Map<DeckType,CardDeckState> {
-    if (type !== 'poker') {
-        throw new Error(`Unsupported deck type: ${type}`);
-    }
+    deckOptions: { includeJokers?: boolean } = { includeJokers: true },
+): CardDeckState {
+    const newDeck = getNewPokerDeck(deckOptions.includeJokers);
+    shuffleInPlace(newDeck);
 
-    const newDeck = getNewPokerDeck(deckOptions.includeJokers); // Get a fresh copy
-    shuffleInPlace(newDeck); // Shuffle the copy
-
-    return new Map<DeckType, CardDeckState>([[type, {
-        remainingCards: newDeck, // This is now the shuffled copy
+    return {
+        remainingCards: newDeck,
         drawnCards: [],
         lastActivity: Date.now(),
         shuffledBy: shufflerId,
-    }]]);
+    };
+}
+
+/**
+ * Every card id in the widest deck, so a persisted deck can be stored as ids
+ * and rebuilt. A Card is fully derivable from its id, which turns a stored
+ * deck from ~54 four-field objects into a short string.
+ */
+const CARDS_BY_ID: ReadonlyMap<string, Card> = new Map(
+    DECK_WITH_JOKERS.map((card) => [card.id, card]),
+);
+
+/** Rebuilds a Card from its id, or null if the id is not one we issue. */
+export function cardFromId(id: string): Card | null {
+    return CARDS_BY_ID.get(id) ?? null;
 }
 
 export function formatCard(card: Card): string {
