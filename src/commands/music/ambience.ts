@@ -104,7 +104,7 @@ async function handleStop(interaction: ChatInputCommandInteraction): Promise<voi
     queue.setRepeatMode(QueueRepeatMode.OFF);
     queue.delete();
 
-    await interaction.reply({ content: `🔇 Kulisy **${ambience.label}** ukončeny. Vracím vám ticho.` });
+    await interaction.reply({ content: `🔇 Kulisy **${ambience.label}** ukončeny. Vracím ti ticho.` });
 }
 
 async function handlePlay(interaction: ChatInputCommandInteraction): Promise<void> {
@@ -113,7 +113,7 @@ async function handlePlay(interaction: ChatInputCommandInteraction): Promise<voi
 
     if (!voiceChannel) {
         await interaction.reply({
-            content: 'Musíte být v hlasovém kanálu. Nemohu vytvářet atmosféru v prázdném prostoru.',
+            content: 'Musíš být v hlasovém kanálu. Nemohu vytvářet atmosféru v prázdném prostoru.',
             flags: MessageFlags.Ephemeral,
         });
         return;
@@ -153,7 +153,7 @@ async function handlePlay(interaction: ChatInputCommandInteraction): Promise<voi
      */
     if (existingQueue && !existingQueue.deleted && existingQueue.currentTrack && !existingAmbience) {
         await interaction.reply({
-            content: '❌ Právě hraje hudba. Kulisy a hudba se o jediný hlasový kanál dělit nedokážou. Vyberte si. Jako dospělí.',
+            content: '❌ Právě hraje hudba. Kulisy a hudba se o jediný hlasový kanál dělit nedokážou. Vyber si. Jako dospělý člověk.',
             flags: MessageFlags.Ephemeral,
         });
         return;
@@ -195,7 +195,7 @@ async function handlePlay(interaction: ChatInputCommandInteraction): Promise<voi
         queue.node.setVolume(AMBIENCE_VOLUME);
 
         await interaction.editReply({
-            content: `🔊 Kulisy: **${preset.label}**. Smyčka běží, dokud neřeknete \`/ambience stop\`.`,
+            content: `🔊 Kulisy: **${preset.label}**. Smyčka běží, dokud neřekneš \`/ambience stop\`.`,
         });
     } catch (error: any) {
         console.error(`Error in /ambience play (${preset.slug}):`, error);

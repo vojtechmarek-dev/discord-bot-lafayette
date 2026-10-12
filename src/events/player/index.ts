@@ -39,7 +39,7 @@ export function registerPlayerEvents(player: Player): void {
         console.error(`[${queue.guild?.name ?? 'unknown'}] Player error on ${track?.title ?? 'unknown track'}:`, error);
         announceSafely(
             queue,
-            `❌ Přehrávání **${track?.title ?? 'skladby'}** selhalo. Podrobnosti jsem si zapsal, vám by nepomohly.`,
+            `❌ Přehrávání **${track?.title ?? 'skladby'}** selhalo. Podrobnosti jsem si zapsal, tobě by nepomohly.`,
         );
     });
 

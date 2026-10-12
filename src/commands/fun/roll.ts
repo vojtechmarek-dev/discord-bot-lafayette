@@ -165,7 +165,7 @@ export const rollCommand: Command = {
             const notationsToRoll = splitDiceNotations(diceNotationInput);
 
             if (hasTooManyNotations(notationsToRoll)) { // Limit number of multiple rolls
-                await interaction.reply({ content: 'Zadržte, kovboji! Můžete požádat pouze o 5 sad házení! Vypadám snad, že těch kostek mám po kapsách tolik?', flags: MessageFlags.Ephemeral });
+                await interaction.reply({ content: 'Zadrž, kovboji! Můžeš požádat pouze o 5 sad házení! Vypadám snad, že těch kostek mám po kapsách tolik?', flags: MessageFlags.Ephemeral });
                 return;
             }
 

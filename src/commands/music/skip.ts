@@ -12,7 +12,7 @@ export const skipCommand: Command = {
 
     // isPlaying() is false while paused, so guard on actual queue contents instead.
     if (!queue || (!queue.currentTrack && queue.tracks.size === 0)) {
-      await interaction.reply({ content: '❌ Nic se nepřehrává! Dosáhli jste konce své hudební cesty. Jak... antiklimatické.', flags: MessageFlags.Ephemeral });
+      await interaction.reply({ content: '❌ Nic se nepřehrává! Dosáhl/a jsi konce své hudební cesty. Jak... antiklimatické.', flags: MessageFlags.Ephemeral });
       return;
     }
 

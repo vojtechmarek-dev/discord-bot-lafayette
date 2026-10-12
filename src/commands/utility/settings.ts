@@ -31,7 +31,7 @@ const SOURCE_LABELS: Record<SearchableSource, string> = {
 export const settingsCommand: Command = {
     data: new SlashCommandBuilder()
         .setName('settings')
-        .setDescription('Nastavení serveru a vaše osobní nastavení.')
+        .setDescription('Nastavení serveru a tvoje osobní nastavení.')
         .addSubcommand(subcommand =>
             subcommand
                 .setName('guild')
@@ -56,17 +56,17 @@ export const settingsCommand: Command = {
         .addSubcommand(subcommand =>
             subcommand
                 .setName('me')
-                .setDescription('Vaše osobní nastavení na tomto serveru.')
+                .setDescription('Tvoje osobní nastavení na tomto serveru.')
                 .addStringOption(option =>
                     option.setName('roll_color')
-                        .setDescription('Barva vašich hodů (např. #FF0000, Red, nebo nechte prázdné pro nabídku).')
+                        .setDescription('Barva tvých hodů (např. #FF0000, Red, nebo nechte prázdné pro nabídku).')
                         .setRequired(false)
                 )
         )
         .addSubcommand(subcommand =>
             subcommand
                 .setName('view')
-                .setDescription('Zobrazí aktuální nastavení serveru i vaše osobní.')
+                .setDescription('Zobrazí aktuální nastavení serveru i tvoje osobní.')
         ),
 
     async execute(interaction: ChatInputCommandInteraction, _client: ExtendedClient) {
@@ -96,8 +96,8 @@ export const settingsCommand: Command = {
             if (highlightCrits !== null) {
                 await setHighlightCritsSetting(interaction.guildId, highlightCrits);
                 changes.push(highlightCrits
-                    ? '🎲 Zvýrazňování kritických hodů **zapnuto**. Nyní uvidíte přesně, kdy vám kostky kriticky přejí (nebude to často).'
-                    : '🎲 Zvýrazňování kritických hodů **vypnuto**. Vaše kritické úspěchy zůstanou diskrétní. Prozatím.');
+                    ? '🎲 Zvýrazňování kritických hodů **zapnuto**. Nyní uvidíš přesně, kdy ti kostky kriticky přejí (nebude to často).'
+                    : '🎲 Zvýrazňování kritických hodů **vypnuto**. Tvoje kritické úspěchy zůstanou diskrétní. Prozatím.');
             }
 
             if (searchSource !== null) {
@@ -107,7 +107,7 @@ export const settingsCommand: Command = {
 
             if (changes.length === 0) {
                 changes.push(
-                    '⚙️ Nezměnil jsem nic, protože jste nic nezadal/a. Aktuálně: zvýrazňování kritických hodů ' +
+                    '⚙️ Nezměnil jsem nic, protože jsi nic nezadal/a. Aktuálně: zvýrazňování kritických hodů ' +
                     `**${getHighlightCritsSetting(interaction.guildId) ? 'zapnuto' : 'vypnuto'}**, ` +
                     `vyhledávání hudby **${SOURCE_LABELS[getMusicSearchSource(interaction.guildId)]}**.`,
                 );

@@ -28,14 +28,14 @@ string fits, put it next to these:
 ```
 Nemohu obnovit přehrávání z **ničeho**. Nejsem metafyzik, jen dobře oblečený kus kovu.
 Nemohu pozastavit ticho. Jsem jen android, ne básník z Odysey.
-Oprávnění odepřeno. Nejste má matka. Ani můj kodér.
-Balíček je prázdný. Věřte mi, zkoušel jsem i kouzla – nefungují
-Chcete ${n} karet, ale jen ${m} zbývá? No tedy! Doporučuji kariéru v účetnictví řádu.
+Oprávnění odepřeno. Nejsi má matka. Ani můj kodér.
+Balíček je prázdný. Věř mi, zkoušel jsem i kouzla – nefungují
+Chceš ${n} karet, ale jen ${m} zbývá? No tedy! Doporučuji kariéru v účetnictví řádu.
 ⏭️ **${title}** ukončena. Některé skladby si nezaslouží klidný konec. Toto byla jedna z nich.
-Musíte zadat název skladby nebo URL k přehrání! Přídavný balíček "čtení myšlenek" nebyl bohužel nainstalován.
-❌ Výsledky vyhledávání: nula. Buď "${query}" neexistuje, nebo přehrávač chrání vaše uši. Podezřívám to druhé.
+Musíš zadat název skladby nebo URL k přehrání! Přídavný balíček "čtení myšlenek" nebyl bohužel nainstalován.
+❌ Výsledky vyhledávání: nula. Buď "${query}" neexistuje, nebo přehrávač chrání tvé uši. Podezřívám to druhé.
 ▶️ Zvuková sekvence inicializována: **${title}** od ${author}!
-🛑 Hudba zastavena, fronta vymazána a opustil jsem hlasový kanál. Odcházím stejně tiše jako váš čas... Tik, ťak...
+🛑 Hudba zastavena, fronta vymazána a opustil jsem hlasový kanál. Odcházím stejně tiše jako tvůj čas... Tik, ťak...
 Bez jasné identifikace mého tvůrce nemohu tento příkaz provést. Zavádím dočasný režim `Syn bez otce`.
 ```
 
@@ -51,14 +51,21 @@ happened, the joke cost them something.
 - ✅ Title `🃏 Balíček byl promíchán!` + footer `Použij /draw k vytáhnutí karty.`
 - ❌ Title `🃏 Osud byl znovu zamíchán, jako vždy marně`
 
-### 2. Formal *vy*, without exception — including imperatives.
+### 2. Informal *ty*, without exception — including imperatives.
 
-Lafayette is a servant addressing employers he privately disdains. The distance
-*is* the joke. Informality collapses it into ordinary snark.
+Lafayette is familiar, not deferential. He has worked here long enough to drop
+the formalities and say what he thinks; the contempt lands harder from someone
+who is clearly on the inside. Formal *vy* makes him sound like a help desk.
 
-- ✅ `Zadržte, kovboji! Můžete požádat pouze o 5 sad házení.`
-- ❌ `Zadrž kovboji! Můžete požádat pouze o 5 sad házení.`
-  — mixes *ty* (`Zadrž`) and *vy* (`Můžete`) in one sentence.
+- ✅ `Zadrž, kovboji! Můžeš požádat pouze o 5 sad házení.`
+- ❌ `Zadržte, kovboji! Můžete požádat pouze o 5 sad házení.`
+
+Watch the possessives and pronouns too, not just the verbs: `tvůj`/`tvoje`
+rather than `váš`/`vaše`, `ti`/`tě`/`tobě` rather than `vám`/`vás`.
+
+> This rule was originally written the other way round, inferred from the
+> shipped strings, and corrected by the author. Record of it kept here because
+> the inference was reasonable and still wrong — the author decides the voice.
 
 ### 3. The `/a` shorthand only works where the feminine simply appends `-a`.
 
@@ -105,10 +112,10 @@ the material.
 He is insufferable, not cruel. The test: could this land badly on someone having
 a bad day? If so, redirect it at himself or at the request.
 
-- ✅ `Váš průměr na d20 je 9,4. To vysvětluje velmi mnoho.`
+- ✅ `Tvůj průměr na d20 je 9,4. To vysvětluje velmi mnoho.`
   — targets the dice, implicates the player by inference. The reader does the
   work, which is why it lands.
-- ❌ `Váš průměr na d20 je 9,4. Jste opravdu beznadějný hráč.`
+- ❌ `Tvůj průměr na d20 je 9,4. Jsi opravdu beznadějný hráč.`
 
 ### 8. Pseudo-technical euphemism for mundane things. Plain language for real failures.
 
@@ -160,7 +167,7 @@ Fixed in Phase 4:
 |---|---|---|
 | `po kaspách` | `po kapsách` | plain typo |
 | `...tolik?.` | `...tolik?` | stray full stop |
-| `Zadrž kovboji!` | `Zadržte, kovboji!` | rule 2, plus the missing comma |
+| `Zadrž kovboji!` | `Zadrž, kovboji!` | missing comma only; the *ty* form is correct per rule 2 |
 | `Exceletní nápad!` | `Excelentní nápad!` | plain typo |
 | `Req by` next to `Požadavek od` | `Požadavek od` | rule 5, two languages in one embed |
 
@@ -186,7 +193,7 @@ reads as a mistake, because it is one.
 
 1. Command **name** English, **description** Czech.
 2. Czech for anything the player sees; English for logs.
-3. Formal *vy*. Check any `/a` participle against rule 3.
+3. Informal *ty*, pronouns included. Check any `/a` participle against rule 3.
 4. One status emoji at the front, from the allowed set.
 5. Title plain and functional. Joke in the footer or the error path.
 6. Real failures explain what broke, in plain language.

@@ -69,7 +69,7 @@ export const playCommand: Command = {
     const rawQuery = interaction.options.getString('query', true);
 
     if (!rawQuery.trim()) {
-      await interaction.reply({ content: 'Musíte zadat název skladby nebo URL k přehrání! Přídavný balíček "čtení myšlenek" nebyl bohužel nainstalován.', flags: MessageFlags.Ephemeral });
+      await interaction.reply({ content: 'Musíš zadat název skladby nebo URL k přehrání! Přídavný balíček "čtení myšlenek" nebyl bohužel nainstalován.', flags: MessageFlags.Ephemeral });
       return;
     }
 
@@ -96,7 +96,7 @@ export const playCommand: Command = {
         });
 
         if (!searchResult || !searchResult.hasTracks()) {
-          await interaction.editReply({ content: `❌ Výsledky vyhledávání: nula. Buď "${rawQuery}" neexistuje, nebo přehrávač chrání vaše uši. Podezřívám to druhé.` });
+          await interaction.editReply({ content: `❌ Výsledky vyhledávání: nula. Buď "${rawQuery}" neexistuje, nebo přehrávač chrání tvé uši. Podezřívám to druhé.` });
           return;
         }
 
@@ -121,7 +121,7 @@ export const playCommand: Command = {
 
         if (searchResult.playlist) {
           await interaction.editReply({
-            content: `🎶 Playlist? Váš vkus bude nyní veřejný. Spuštěno. **${searchResult.playlist.title}** zařazen s ${searchResult.tracks.length} skladbami.`,
+            content: `🎶 Playlist? Tvůj vkus bude nyní veřejný. Spuštěno. **${searchResult.playlist.title}** zařazen s ${searchResult.tracks.length} skladbami.`,
           });
           return;
         }
@@ -137,7 +137,7 @@ export const playCommand: Command = {
     } catch (error: any) {
       console.error('Error in /play command:', error);
       if (interaction.deferred || interaction.replied) {
-        await interaction.editReply({ content: `❌ Ups! Něco se pokazilo: ${error.message}. \n Nastala chyba. Možná vaše chyba. Ale dobře řekněme, že to může být i moje chyba. (...není)` }).catch(() => {});
+        await interaction.editReply({ content: `❌ Ups! Něco se pokazilo: ${error.message}. \n Nastala chyba. Možná tvoje chyba. Ale dobře řekněme, že to může být i moje chyba. (...není)` }).catch(() => {});
       } else {
         await interaction.reply({ content: `❌ Neočekávaná porucha: ${error.message}. \n Lafayette je zmaten. To se stává přibližně jednou za... věčnost.`, flags: MessageFlags.Ephemeral }).catch(() => {});
       }

@@ -35,7 +35,7 @@ async function handleCommand(interaction: ChatInputCommandInteraction, client: C
     await command.execute(interaction, client); // Pass client to command's execute
   } catch (error) {
     console.error(`Error executing command ${interaction.commandName}:`, error);
-    const errorMessage = 'Při provádění příkazu došlo k chybě. Zaznamenal jsem ji. Vy zkuste znovu.';
+    const errorMessage = 'Při provádění příkazu došlo k chybě. Zaznamenal jsem ji. Ty to zkus znovu.';
     if (interaction.replied || interaction.deferred) {
       await interaction.followUp({ content: errorMessage, flags: MessageFlags.Ephemeral }).catch(() => {});
     } else {

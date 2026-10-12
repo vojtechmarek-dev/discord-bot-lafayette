@@ -17,6 +17,6 @@ export const stopCommand: Command = {
 
     queue.delete(); // Clears the queue and disconnects
 
-    await interaction.reply({ content: '🛑 Hudba zastavena, fronta vymazána a opustil jsem hlasový kanál. Odcházím stejně tiše jako váš čas... Tik, ťak...' });
+    await interaction.reply({ content: '🛑 Hudba zastavena, fronta vymazána a opustil jsem hlasový kanál. Odcházím stejně tiše jako tvůj čas... Tik, ťak...' });
   },
 };

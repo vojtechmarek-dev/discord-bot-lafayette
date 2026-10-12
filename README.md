@@ -1,12 +1,14 @@
 # Lafayette - Discord Bot
 
-> ⚠️ **Disclaimer:** Some bot responses and messages are currently in Czech and some are in English. Internationalization (i18n) and localization support are planned for a future release.
+> **Language:** Everything a player sees is Czech; logs and operator-facing output are English.
+> See [docs/VOICE.md](docs/VOICE.md) for how Lafayette speaks and why.
 
 
 **TODO**
-- [] Internationalization (i18n) and localization
-- [] configurable deck cleanup interval
-- [] bot settings from fs json to redis cache
+- [ ] Configurable deck cleanup interval
+- [ ] Character sheets and an encounter tracker
+- [x] ~~Bot settings from fs json to a real store~~ — now SQLite via `node:sqlite`
+- [x] ~~Consistent Czech player-facing copy~~ — see [docs/VOICE.md](docs/VOICE.md)
 
 Lafayette is a multi-functional Discord bot built with Node.js, TypeScript, and leveraging powerful libraries like `discord.js`,`discord-player` and `rpg-dice-roller`. It features slash commands for various utilities, including dice rolling and music playback.
 
@@ -19,7 +21,8 @@ Lafayette is a multi-functional Discord bot built with Node.js, TypeScript, and 
     *   Commands: `/play`, `/skip`, `/stop`, `/queue`, `/resume`, `/pause`.
 *   **Dice Rolling:**
     *   Supports standard RPG dice notation (e.g., `2d6+5`, `1d20-2`, `4dF`).
-    *   Highlights critical successes (max roll) and critical failures (min roll) on dice.
+    *   Marks critical successes (max roll) on dice. Critical-failure detection exists but renders
+        nothing by default - see `CRIT_FAILURE_MARKER` in `src/commands/fun/roll.ts` to enable it.
     *   Handles multiple rolls in a single command, separated by `;` or `,`.
     *   Examples: `/roll dice:2d6`, `/roll dice:1d20+5, 4dF`.
 *   **Utility Commands:**
@@ -45,6 +48,10 @@ Lafayette is a multi-functional Discord bot built with Node.js, TypeScript, and 
    Shuffle a new poker deck for the server. `jokers` defaults to true.
  - `/draw [count]`  
    Draw 1–52 cards from the current server deck, tracking remaining/drawn cards.
+- `/adv [bonus]`  
+  Roll 1d20 with advantage (`2d20kh1`). Accepts a bonus such as `+5` or `+1d4`.
+- `/dis [bonus]`  
+  Roll 1d20 with disadvantage (`2d20kl1`).
 
 ### 🎵 Music
 - `/play [query]`  
@@ -82,14 +89,13 @@ Lafayette is a multi-functional Discord bot built with Node.js, TypeScript, and 
 
 ## Prerequisites
 
-*   Node.js (v20.x or later recommended, check `package.json` engines)
+*   Node.js 24 or newer. Required, not advisory: persistence uses the built-in `node:sqlite`.
 *   npm or yarn
 *   (optional) Docker - for building and running, or for deployment target
 *   A Discord Bot Application:
     *   Create one on the [Discord Developer Portal](https://discord.com/developers/applications).
     *   Enable **Privileged Gateway Intents**:
         *   `Server Members Intent` (if needed for member-specific features)
-        *   `Message Content Intent` (if you plan to add prefix commands or read message content for other reasons)
         *   Presence Intent (if needed)
     *   Note your Bot Token, Client ID.
 
@@ -117,11 +123,15 @@ Lafayette is a multi-functional Discord bot built with Node.js, TypeScript, and 
     GUILD_ID=YOUR_DEVELOPMENT_SERVER_ID # For instant slash command updates during dev
     BOT_OWNER_ID # for /echo command to work properly
 
-    # Optional: Path to FFmpeg if not in system PATH and needed by discord-player
-    # FFMPEG_PATH=/usr/bin/ffmpeg
+    # Optional: path to an ffmpeg binary. Without it the resolver falls back to
+    # `ffmpeg` on PATH, then to the ffmpeg-static dev dependency.
+    # DP_FFMPEG_PATH=/usr/bin/ffmpeg
 
-    # TODO: Make deck cleanup interval configurable
-    # DECK_CLEANUP_INTERVAL_MS=21600000 # 6 hours (not implemented yet)
+    # Optional: where lafayette.db and the ambience folder live. Defaults to <cwd>/data.
+    # LAFAYETTE_DATA_DIR=
+
+    # Optional: set to 1 to log which extractor served each query.
+    # LAFAYETTE_PLAYER_DEBUG=0
     ```
     *   `GUILD_ID` is your personal Discord server ID used for rapid testing of slash commands. Get it by enabling Developer Mode in Discord, right-clicking your server icon, and "Copy ID".
 
@@ -208,11 +218,11 @@ the bot rescans the directory on every command, so no restart is needed either.
 
 - Card deck cleanup runs on bot ready and then every 6 hours by default.
 - Decks with no activity for 7 days are removed from state.
-- TODO: Make the cleanup interval configurable via env (`DECK_CLEANUP_INTERVAL_MS`).
+- The 7-day expiry and 6-hour sweep interval are currently constants in the source.
 
 ## GitHub Actions CI/CD
 
-The workflow in .github/workflows/docker-publish-and-deploy-commands.yml handles:
+The workflow in `.github/workflows/build-and-publish.yml` handles:
 
 1. Building and Pushing Docker Image:
 * On pushes to main and release branches.
@@ -224,7 +234,7 @@ The workflow in .github/workflows/docker-publish-and-deploy-commands.yml handles
 * On pushes to the release branch only.
 * Installs Node.js dependencies.
 * Runs the npm run deploy:commands script.
-* Uses GitHub Secrets (DISCORD_BOT_TOKEN, DISCORD_CLIENT_ID) for authentication.
+* Uses GitHub Secrets (`DISCORD_TOKEN`, `CLIENT_ID`) for authentication.
 
 ### Required GitHub Secrets for Actions
 

@@ -41,7 +41,7 @@ export const volumeCommand: Command = {
 
         await interaction.reply({
             content: appliedNow
-                ? `🔉 Hlasitost nastavena na **${requested} %**. Uši jsou vaše. Odpovědnost rovněž.`
+                ? `🔉 Hlasitost nastavena na **${requested} %**. Uši jsou tvoje. Odpovědnost rovněž.`
                 : `🔉 Hlasitost uložena na **${requested} %**. Použiji ji, až bude co přehrávat.`,
         });
     },

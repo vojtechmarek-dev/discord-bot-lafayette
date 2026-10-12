@@ -26,7 +26,7 @@ export const readyEvent: BotEvent = {
     console.log(`🎉 Ready! Logged in as ${client.user.tag}`);
     console.log(`🤖 ${client.user.username} is serving ${client.guilds.cache.size} guilds.`);
     client.user.setPresence({
-      activities: [{ name: 'vaše skladby a kostky | /play /roll' }],
+      activities: [{ name: 'tvoje skladby a kostky | /play /roll' }],
       status: 'online',
     });
 

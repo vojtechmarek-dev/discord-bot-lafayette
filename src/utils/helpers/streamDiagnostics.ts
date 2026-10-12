@@ -46,7 +46,7 @@ const USER_MESSAGES: Record<StreamFailureKind, string> = {
     'po-token': 'YouTube si vyžádal ověřovací token, který se nepodařilo získat.',
     'no-ustreamer-config': 'YouTube nevrátil použitelnou konfiguraci streamu.',
     'no-stream-url': 'YouTube nevrátil žádnou přehratelnou adresu zvuku.',
-    forbidden: 'YouTube odmítl zvukové segmenty (403). Zkuste jiný zdroj, například `/play source:soundcloud`.',
+    forbidden: 'YouTube odmítl zvukové segmenty (403). Zkus jiný zdroj, například `/play source:soundcloud`.',
     'not-found': 'Zdroj tuto skladbu nezpřístupnil – může být smazaná, soukromá nebo blokovaná.',
     network: 'Spojení se zdrojem se přerušilo.',
     unknown: 'Zdroj nevrátil žádný zvuk.',

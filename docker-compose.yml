@@ -1,5 +1,3 @@
-version: '3.8'
-
 services:
   lafayette-bot:
     image: discord-bot-lafayette:latest # Replace with your actual image name

@@ -41,6 +41,6 @@ export const resumeCommand: Command = {
     await interaction.deferReply();
 
     timeline.resume();
-    await interaction.editReply({ content: "Přehrávání obnoveno. Váš přehrávač znovu hraje... zatímco svět hoří." });
+    await interaction.editReply({ content: "Přehrávání obnoveno. Tvůj přehrávač znovu hraje... zatímco svět hoří." });
   },
 };

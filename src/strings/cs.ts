@@ -15,34 +15,34 @@ export const strings = {
         guildOnly: 'Tento příkaz lze použít pouze na serveru.',
         unknownCommand: (name: string) =>
             `❌ Tento příkaz neznám: \`/${name}\`. Můj slovník je rozsáhlý, nikoli však nekonečný.`,
-        commandFailed: 'Při provádění příkazu došlo k chybě. Zaznamenal jsem ji. Vy zkuste znovu.',
+        commandFailed: 'Při provádění příkazu došlo k chybě. Zaznamenal jsem ji. Ty to zkus znovu.',
     },
 
     voice: {
-        notAMember: 'Nepodařilo se mi ověřit, že jste členem tohoto serveru. Existujete vůbec?',
-        userNotInVoice: 'Musíte být v hlasovém kanálu. Hrát do prázdna umím, ale odmítám.',
+        notAMember: 'Nepodařilo se mi ověřit, že jsi členem tohoto serveru. Existuješ vůbec?',
+        userNotInVoice: 'Musíš být v hlasovém kanálu. Hrát do prázdna umím, ale odmítám.',
         unsupportedChannel: 'Umím se připojit pouze do hlasového nebo stage kanálu.',
-        playerUnavailable: 'Přehrávač není momentálně k dispozici. Zkuste to znovu za okamžik.',
+        playerUnavailable: 'Přehrávač není momentálně k dispozici. Zkus to znovu za okamžik.',
     },
 
     settings: {
         needManageGuild:
-            'Na změnu nastavení serveru potřebujete oprávnění „Spravovat server". Já pravidla nevymýšlím, pouze je vymáhám.',
-        colorSet: (color: string) => `🎨 Barva vašich hodů nastavena na \`${color}\`.`,
+            'Na změnu nastavení serveru potřebuješ oprávnění „Spravovat server". Já pravidla nevymýšlím, pouze je vymáhám.',
+        colorSet: (color: string) => `🎨 Barva tvých hodů nastavena na \`${color}\`.`,
         colorSetNamed: (name: string, color: string) =>
-            `✅ Barva vašich hodů nastavena na **${name}** (\`${color}\`).`,
+            `✅ Barva tvých hodů nastavena na **${name}** (\`${color}\`).`,
         colorUnparsed: (input: string) =>
-            `🤔 "${input}" jako barvu nechápu. Vyberte z nabídky níže, nebo zadejte hex (např. #RRGGBB) či název barvy.`,
-        colorPrompt: '🎨 Vyberte barvu pro své hody:',
-        colorInvalidChoice: 'Neplatná volba. Zkuste to prosím znovu.',
+            `🤔 "${input}" jako barvu nechápu. Vyber z nabídky níže, nebo zadej hex (např. #RRGGBB) či název barvy.`,
+        colorPrompt: '🎨 Vyber si barvu pro své hody:',
+        colorInvalidChoice: 'Neplatná volba. Zkus to prosím znovu.',
         colorTimedOut: '🎨 Výběr barvy vypršel. Nic jsem nezměnil.',
     },
 
     echo: {
-        notOwner: 'Oprávnění odepřeno. Nejste má matka. Ani můj kodér.',
+        notOwner: 'Oprávnění odepřeno. Nejsi má matka. Ani můj kodér.',
         ownerUnset:
             'Bez jasné identifikace mého tvůrce nemohu tento příkaz provést. Zavádím dočasný režim `Syn bez otce`.',
-        invalidChannelType: '⚠️ Nevhodný typ kanálu. Vyberte textový nebo oznamovací kanál.',
+        invalidChannelType: '⚠️ Nevhodný typ kanálu. Vyber textový nebo oznamovací kanál.',
         noTargetChannel: '⚠️ Nepodařilo se určit cílový textový kanál.',
         sent: (channel: string) => `✅ Zpráva odeslána do ${channel}.`,
         failed: (reason: string) => `❌ Zprávu se nepodařilo odeslat: ${reason}`,

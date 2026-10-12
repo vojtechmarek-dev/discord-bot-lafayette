@@ -34,7 +34,7 @@ export const drawCommand: Command = {
 
         if (outcome.kind === 'empty') {
             await interaction.reply({
-                content: 'Balíček je prázdný. Věřte mi, zkoušel jsem i kouzla – nefungují',
+                content: 'Balíček je prázdný. Věř mi, zkoušel jsem i kouzla – nefungují',
                 flags: MessageFlags.Ephemeral,
             });
             return;
@@ -42,7 +42,7 @@ export const drawCommand: Command = {
 
         if (outcome.kind === 'tooMany') {
             await interaction.reply({
-                content: `Chcete ${countToDraw} karet, ale jen ${outcome.remaining} zbývá? No tedy! Doporučuji kariéru v účetnictví řádu.`,
+                content: `Chceš ${countToDraw} karet, ale jen ${outcome.remaining} zbývá? No tedy! Doporučuji kariéru v účetnictví řádu.`,
                 flags: MessageFlags.Ephemeral,
             });
             return;

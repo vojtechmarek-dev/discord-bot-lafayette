@@ -13,7 +13,7 @@ type ModeKey = keyof typeof MODE_VALUES;
 const MODE_REPLIES: Record<ModeKey, string> = {
     off: '🔁 Opakování **vypnuto**. Fronta doběhne a skončí, jako všechno ostatní.',
     track: '🔁 Opakuji **současnou skladbu**. Doufám, že ji máte opravdu rádi.',
-    queue: '🔁 Opakuji **celou frontu**. Donekonečna. Nebo dokud vás to nepřestane bavit – což nastane dřív.',
+    queue: '🔁 Opakuji **celou frontu**. Donekonečna. Nebo dokud tě to nepřestane bavit – což nastane dřív.',
 };
 
 export const loopCommand: Command = {
