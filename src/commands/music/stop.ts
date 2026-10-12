@@ -1,4 +1,4 @@
-import { SlashCommandBuilder, ChatInputCommandInteraction } from 'discord.js';
+import { SlashCommandBuilder, ChatInputCommandInteraction, MessageFlags } from 'discord.js';
 import { useQueue } from 'discord-player';
 import { Command, ExtendedClient } from '../../types';
 
@@ -11,7 +11,7 @@ export const stopCommand: Command = {
     const queue = useQueue(interaction.guildId);
 
     if (!queue) {
-      await interaction.reply({ content: '❌ Žádná hudba se nepřehrává k zastavení! Nemohu zastavit to, co neexistuje. Filozofie stranou, není co zastavit.', ephemeral: true });
+      await interaction.reply({ content: '❌ Žádná hudba se nepřehrává k zastavení! Nemohu zastavit to, co neexistuje. Filozofie stranou, není co zastavit.', flags: MessageFlags.Ephemeral });
       return;
     }
 

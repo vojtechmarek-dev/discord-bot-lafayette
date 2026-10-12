@@ -1,4 +1,4 @@
-import { SlashCommandBuilder, ChatInputCommandInteraction } from 'discord.js';
+import { SlashCommandBuilder, ChatInputCommandInteraction, MessageFlags } from 'discord.js';
 import { useQueue } from 'discord-player';
 import { Command, ExtendedClient } from '../../types';
 import { getMusicVolume, setMusicVolume } from '../../guildSettingsManager';
@@ -16,7 +16,7 @@ export const volumeCommand: Command = {
 
     async execute(interaction: ChatInputCommandInteraction, _client: ExtendedClient) {
         if (!interaction.guildId) {
-            await interaction.reply({ content: 'Tento příkaz lze použít pouze na serveru.', ephemeral: true });
+            await interaction.reply({ content: 'Tento příkaz lze použít pouze na serveru.', flags: MessageFlags.Ephemeral });
             return;
         }
 
@@ -25,7 +25,7 @@ export const volumeCommand: Command = {
         if (requested === null) {
             await interaction.reply({
                 content: `🔉 Hlasitost je nastavena na **${getMusicVolume(interaction.guildId)} %**.`,
-                ephemeral: true,
+                flags: MessageFlags.Ephemeral,
             });
             return;
         }

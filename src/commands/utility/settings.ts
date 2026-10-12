@@ -8,6 +8,7 @@ import {
     ButtonStyle,
     ComponentType,
     ColorResolvable,
+  MessageFlags,
 } from 'discord.js';
 import { Command, ExtendedClient } from '../../types';
 import {
@@ -20,6 +21,7 @@ import {
 } from '../../guildSettingsManager';
 import { parseColorString, PREDEFINED_COLORS, DEFAULT_EMBED_COLOR } from '../../utils/colorUtils';
 import type { SearchableSource } from '../../utils/helpers/queryRouter';
+import { strings } from '../../strings/cs';
 
 const SOURCE_LABELS: Record<SearchableSource, string> = {
     soundcloud: 'SoundCloud',
@@ -29,21 +31,21 @@ const SOURCE_LABELS: Record<SearchableSource, string> = {
 export const settingsCommand: Command = {
     data: new SlashCommandBuilder()
         .setName('settings')
-        .setDescription('Manage server-specific and personal bot settings.')
+        .setDescription('Nastavení serveru a vaše osobní nastavení.')
         .addSubcommand(subcommand =>
             subcommand
                 .setName('guild')
-                .setDescription('Configure server-wide settings (requires Manage Guild permission).')
+                .setDescription('Nastavení pro celý server. Vyžaduje oprávnění Spravovat server.')
                 // Both optional: setting one should not force you to restate the
                 // other. With neither given, the current values are shown.
                 .addBooleanOption(option =>
                     option.setName('highlight_crits')
-                        .setDescription('Highlight critical successes and failures in dice roll results.')
+                        .setDescription('Zvýrazňovat kritické úspěchy a selhání ve výsledcích hodů.')
                         .setRequired(false)
                 )
                 .addStringOption(option =>
                     option.setName('music_search_source')
-                        .setDescription('Where a plain-text /play query is searched when no link is given.')
+                        .setDescription('Kde hledat hudbu, když v /play nezadáte odkaz.')
                         .addChoices(
                             { name: 'SoundCloud (recommended)', value: 'soundcloud' },
                             { name: 'YouTube', value: 'youtube' },
@@ -54,22 +56,22 @@ export const settingsCommand: Command = {
         .addSubcommand(subcommand =>
             subcommand
                 .setName('me')
-                .setDescription('Manage your personal settings for this server.')
+                .setDescription('Vaše osobní nastavení na tomto serveru.')
                 .addStringOption(option =>
                     option.setName('roll_color')
-                        .setDescription('Set embed color for your dice rolls (e.g., #FF0000, Red, or leave blank for options).')
+                        .setDescription('Barva vašich hodů (např. #FF0000, Red, nebo nechte prázdné pro nabídku).')
                         .setRequired(false)
                 )
         )
         .addSubcommand(subcommand =>
             subcommand
                 .setName('view')
-                .setDescription('View current server and your personal settings.')
+                .setDescription('Zobrazí aktuální nastavení serveru i vaše osobní.')
         ),
 
     async execute(interaction: ChatInputCommandInteraction, _client: ExtendedClient) {
         if (!interaction.guildId) {
-            await interaction.reply({ content: 'This command can only be used in a server.', ephemeral: true });
+            await interaction.reply({ content: strings.common.guildOnly, flags: MessageFlags.Ephemeral });
             return;
         }
 
@@ -81,8 +83,8 @@ export const settingsCommand: Command = {
             // Ensure user has ManageGuild permission for this subcommand specifically
             if (!interaction.memberPermissions?.has(PermissionFlagsBits.ManageGuild)) {
                 await interaction.reply({
-                    content: 'You need the "Manage Guild" permission to change server-wide settings.',
-                    ephemeral: true,
+                    content: strings.settings.needManageGuild,
+                    flags: MessageFlags.Ephemeral,
                 });
                 return;
             }
@@ -111,7 +113,7 @@ export const settingsCommand: Command = {
                 );
             }
 
-            await interaction.reply({ content: changes.join('\n'), ephemeral: true });
+            await interaction.reply({ content: changes.join('\n'), flags: MessageFlags.Ephemeral });
         } else if (subcommand === 'me') {
             const colorInput = interaction.options.getString('roll_color');
             let chosenColor: ColorResolvable | null = null;
@@ -121,23 +123,23 @@ export const settingsCommand: Command = {
                 if (chosenColor) {
                     await setUserRollEmbedColor(interaction.guildId, user.id, chosenColor);
                     await interaction.reply({
-                        content: `🎨 Your dice roll embed color has been set to \`${chosenColor.toString()}\`.`,
-                        ephemeral: true,
+                        content: strings.settings.colorSet(chosenColor.toString()),
+                        flags: MessageFlags.Ephemeral,
                     });
                     return;
                 } else {
                     // Color input provided but not parseable, proceed to offer predefined
                     await interaction.reply({
-                        content: `🤔 I couldn't understand "${colorInput}" as a color. Choose from the options below or try a hex code (e.g., #RRGGBB) or a basic color name.`,
-                        ephemeral: true,
+                        content: strings.settings.colorUnparsed(colorInput),
+                        flags: MessageFlags.Ephemeral,
                         components: createColorButtons(interaction.id, 0) // initial set of buttons
                     });
                 }
             } else {
                 // No color input, directly offer predefined choices
                 await interaction.reply({
-                    content: '🎨 Choose a color for your dice roll embeds:',
-                    ephemeral: true,
+                    content: strings.settings.colorPrompt,
+                    flags: MessageFlags.Ephemeral,
                     components: createColorButtons(interaction.id, 0) // initial set of buttons
                 });
             }
@@ -166,19 +168,19 @@ export const settingsCommand: Command = {
                     chosenColor = selected.value;
                     await setUserRollEmbedColor(interaction.guildId!, user.id, chosenColor);
                     await i.update({ // Update the original ephemeral message
-                        content: `✅ Your dice roll embed color has been set to **${selected.name}** (\`${chosenColor.toString()}\`).`,
+                        content: strings.settings.colorSetNamed(selected.name, chosenColor.toString()),
                         components: [], // Remove buttons
                     });
                     collector.stop('colorSet');
                 } else {
-                    await i.update({ content: 'Invalid selection. Please try again.', components: []});
+                    await i.update({ content: strings.settings.colorInvalidChoice, components: []});
                     collector.stop('error');
                 }
             });
 
             collector?.on('end', (collected, reason) => {
                 if (reason !== 'colorSet' && reason !== 'error') {
-                    interaction.editReply({ content: '🎨 Color selection timed out. No changes made.', components: [] }).catch(() => {});
+                    interaction.editReply({ content: strings.settings.colorTimedOut, components: [] }).catch(() => {});
                 }
             });
 
@@ -201,7 +203,7 @@ export const settingsCommand: Command = {
                     // Add more settings as they are implemented
                 );
 
-            await interaction.reply({ embeds: [settingsEmbed], ephemeral: true });
+            await interaction.reply({ embeds: [settingsEmbed], flags: MessageFlags.Ephemeral });
         }
     },
 };

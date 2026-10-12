@@ -1,39 +1,40 @@
 // src/commands/music/play.ts
-import { SlashCommandBuilder, ChatInputCommandInteraction, GuildMember, ChannelType, VoiceBasedChannel } from 'discord.js';
+import { SlashCommandBuilder, ChatInputCommandInteraction, GuildMember, ChannelType, VoiceBasedChannel, MessageFlags } from 'discord.js';
 import { QueryType, useMainPlayer } from 'discord-player'; // Import from discord-player
 import { Command, ExtendedClient } from '../../types';
 import { routeQuery, type SearchableSource } from '../../utils/helpers/queryRouter';
 import { buildNodeOptions, refreshQueueMetadata, type QueueContext } from '../../utils/helpers/queueFactory';
 import { getMusicSearchSource, getMusicVolume } from '../../guildSettingsManager';
+import { strings } from '../../strings/cs';
 
 async function prePlayValidation(
     interaction: ChatInputCommandInteraction
 ): Promise<{ member: GuildMember; voiceChannel: VoiceBasedChannel; player: ReturnType<typeof useMainPlayer> } | null> {
     if (!interaction.guildId) {
-        await interaction.reply({ content: 'This command can only be used in a server.', ephemeral: true });
+        await interaction.reply({ content: strings.common.guildOnly, flags: MessageFlags.Ephemeral });
         return null;
     }
 
     const member = interaction.member as GuildMember; // Already in a guild, so member should exist
     if (!member) { // Should technically not happen if guildId is present and it's a guild command
-        await interaction.reply({ content: 'Could not identify you as a member of this server.', ephemeral: true });
+        await interaction.reply({ content: strings.voice.notAMember, flags: MessageFlags.Ephemeral });
         return null;
     }
 
     const voiceChannel = member.voice.channel;
     if (!voiceChannel) {
-        await interaction.reply({ content: 'You need to be in a voice channel to play music!', ephemeral: true });
+        await interaction.reply({ content: strings.voice.userNotInVoice, flags: MessageFlags.Ephemeral });
         return null;
     }
 
     if (voiceChannel.type !== ChannelType.GuildVoice && voiceChannel.type !== ChannelType.GuildStageVoice) {
-        await interaction.reply({ content: 'I can only join server voice or stage channels!', ephemeral: true });
+        await interaction.reply({ content: strings.voice.unsupportedChannel, flags: MessageFlags.Ephemeral });
         return null;
     }
 
     const player = useMainPlayer();
     if (!player) {
-        await interaction.reply({ content: 'Music player is not available at the moment. Please try again later.', ephemeral: true });
+        await interaction.reply({ content: strings.voice.playerUnavailable, flags: MessageFlags.Ephemeral });
         return null;
     }
 
@@ -68,7 +69,7 @@ export const playCommand: Command = {
     const rawQuery = interaction.options.getString('query', true);
 
     if (!rawQuery.trim()) {
-      await interaction.reply({ content: 'Musíte zadat název skladby nebo URL k přehrání! Přídavný balíček "čtení myšlenek" nebyl bohužel nainstalován.', ephemeral: true });
+      await interaction.reply({ content: 'Musíte zadat název skladby nebo URL k přehrání! Přídavný balíček "čtení myšlenek" nebyl bohužel nainstalován.', flags: MessageFlags.Ephemeral });
       return;
     }
 
@@ -138,7 +139,7 @@ export const playCommand: Command = {
       if (interaction.deferred || interaction.replied) {
         await interaction.editReply({ content: `❌ Ups! Něco se pokazilo: ${error.message}. \n Nastala chyba. Možná vaše chyba. Ale dobře řekněme, že to může být i moje chyba. (...není)` }).catch(() => {});
       } else {
-        await interaction.reply({ content: `❌ Neočekávaná porucha: ${error.message}. \n Lafayette je zmaten. To se stává přibližně jednou za... věčnost.`, ephemeral: true }).catch(() => {});
+        await interaction.reply({ content: `❌ Neočekávaná porucha: ${error.message}. \n Lafayette je zmaten. To se stává přibližně jednou za... věčnost.`, flags: MessageFlags.Ephemeral }).catch(() => {});
       }
     }
   },
@@ -148,10 +149,10 @@ export const playCommand: Command = {
 export const playFileCommand: Command = {
     data: new SlashCommandBuilder()
         .setName('playfile')
-        .setDescription('Plays an attached MP3 file.')
+        .setDescription('Přehraje přiložený soubor MP3.')
         .addAttachmentOption(option =>
             option.setName('file')
-                .setDescription('The MP3 file to play.')
+                .setDescription('Soubor MP3 k přehrání.')
                 .setRequired(true)
         ) as SlashCommandBuilder,
     async execute(interaction: ChatInputCommandInteraction, _client: ExtendedClient) {
@@ -168,7 +169,7 @@ export const playFileCommand: Command = {
         // Must reject before deferReply(), otherwise reply() throws InteractionAlreadyReplied
         // and the user gets a generic error instead of the reason.
         if (!(attachmentInput.contentType === 'audio/mpeg' || attachmentInput.name.toLowerCase().endsWith('.mp3'))) {
-            await interaction.reply({ content: '❌ Tento soubor není MP3. Přijímám výhradně MP3. Ano, je to omezení. Ne, omlouvat se za něj nebudu.', ephemeral: true });
+            await interaction.reply({ content: '❌ Tento soubor není MP3. Přijímám výhradně MP3. Ano, je to omezení. Ne, omlouvat se za něj nebudu.', flags: MessageFlags.Ephemeral });
             return;
         }
 
@@ -213,7 +214,7 @@ export const playFileCommand: Command = {
             if (interaction.replied || interaction.deferred) {
                 await interaction.editReply({ content: message }).catch(() => {});
             } else {
-                await interaction.reply({ content: message, ephemeral: true }).catch(() => {});
+                await interaction.reply({ content: message, flags: MessageFlags.Ephemeral }).catch(() => {});
             }
         }
     },

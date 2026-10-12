@@ -1,4 +1,4 @@
-import { Events, Interaction, Client, AutocompleteInteraction, ChatInputCommandInteraction } from 'discord.js';
+import { Events, Interaction, Client, AutocompleteInteraction, ChatInputCommandInteraction, MessageFlags } from 'discord.js';
 import { BotEvent } from '../types';
 
 export const interactionCreateEvent: BotEvent = {
@@ -26,7 +26,7 @@ async function handleCommand(interaction: ChatInputCommandInteraction, client: C
     console.error(`No command matching ${interaction.commandName} was found.`);
     await interaction.reply({
       content: `❌ Tento příkaz neznám: \`/${interaction.commandName}\`. Můj slovník je rozsáhlý, nikoli však nekonečný.`,
-      ephemeral: true,
+      flags: MessageFlags.Ephemeral,
     });
     return;
   }
@@ -37,9 +37,9 @@ async function handleCommand(interaction: ChatInputCommandInteraction, client: C
     console.error(`Error executing command ${interaction.commandName}:`, error);
     const errorMessage = 'Při provádění příkazu došlo k chybě. Zaznamenal jsem ji. Vy zkuste znovu.';
     if (interaction.replied || interaction.deferred) {
-      await interaction.followUp({ content: errorMessage, ephemeral: true }).catch(() => {});
+      await interaction.followUp({ content: errorMessage, flags: MessageFlags.Ephemeral }).catch(() => {});
     } else {
-      await interaction.reply({ content: errorMessage, ephemeral: true }).catch(() => {});
+      await interaction.reply({ content: errorMessage, flags: MessageFlags.Ephemeral }).catch(() => {});
     }
   }
 }

@@ -1,4 +1,4 @@
-import { SlashCommandBuilder, ChatInputCommandInteraction, EmbedBuilder } from 'discord.js';
+import { SlashCommandBuilder, ChatInputCommandInteraction, EmbedBuilder, MessageFlags } from 'discord.js';
 import { useQueue } from 'discord-player';
 import { Command, ExtendedClient } from '../../types';
 
@@ -12,7 +12,7 @@ export const queueCommand: Command = {
 
     // isPlaying() is false while paused, so guard on actual queue contents instead.
     if (!queue || (!queue.currentTrack && queue.tracks.size === 0)) {
-      await interaction.reply({ content: '❌ Fronta je prázdná a nic se nepřehrává!', ephemeral: true });
+      await interaction.reply({ content: '❌ Fronta je prázdná a nic se nepřehrává!', flags: MessageFlags.Ephemeral });
       return;
     }
 

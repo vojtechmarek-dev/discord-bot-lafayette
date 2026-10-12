@@ -1,6 +1,7 @@
-import { ChatInputCommandInteraction, SlashCommandBuilder } from "discord.js";
+import { ChatInputCommandInteraction, SlashCommandBuilder, MessageFlags } from "discord.js";
 import { useTimeline } from "discord-player";
 import { Command, ExtendedClient } from "../../types";
+import { strings } from '../../strings/cs';
 
 export const pauseCommand: Command = {
   data: new SlashCommandBuilder()
@@ -12,7 +13,7 @@ export const pauseCommand: Command = {
   ) {
 
     if (!interaction.guild) {
-        await interaction.reply({ content: 'This command can only be used in a server.', ephemeral: true });
+        await interaction.reply({ content: strings.common.guildOnly, flags: MessageFlags.Ephemeral });
         return;
     }
 

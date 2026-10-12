@@ -1,4 +1,4 @@
-import { SlashCommandBuilder, ChatInputCommandInteraction } from 'discord.js';
+import { SlashCommandBuilder, ChatInputCommandInteraction, MessageFlags } from 'discord.js';
 import { useQueue } from 'discord-player';
 import { Command, ExtendedClient } from '../../types';
 
@@ -12,7 +12,7 @@ export const skipCommand: Command = {
 
     // isPlaying() is false while paused, so guard on actual queue contents instead.
     if (!queue || (!queue.currentTrack && queue.tracks.size === 0)) {
-      await interaction.reply({ content: '❌ Nic se nepřehrává! Dosáhli jste konce své hudební cesty. Jak... antiklimatické.', ephemeral: true });
+      await interaction.reply({ content: '❌ Nic se nepřehrává! Dosáhli jste konce své hudební cesty. Jak... antiklimatické.', flags: MessageFlags.Ephemeral });
       return;
     }
 

@@ -4,28 +4,30 @@ import {
     EmbedBuilder,
     TextChannel,
     ChannelType,
+  MessageFlags,
 } from 'discord.js';
 import { Command, ExtendedClient } from '../../types';
-import { config } from '../../config'; 
+import { config } from '../../config';
+import { strings } from '../../strings/cs'; 
 //import { getTranslator } from '../../i18n'; // If you want to use i18n for error messages - todo next
 
 export const echoCommand: Command = {
     data: new SlashCommandBuilder()
         .setName('echo')
-        .setDescription('Sends a message as the bot (Owner only).')
+        .setDescription('Odešle zprávu mým jménem. Pouze pro mého tvůrce.')
         .addStringOption(option =>
             option.setName('message')
-                .setDescription('The message content to send.')
+                .setDescription('Obsah zprávy.')
                 .setRequired(true)
         )
         .addStringOption(option =>
             option.setName('title')
-                .setDescription('Optional title for the embed.')
+                .setDescription('Volitelný nadpis.')
                 .setRequired(false)
         )
         .addChannelOption(option => // Optional: allow specifying a channel
             option.setName('channel')
-                .setDescription('The channel to send the message to (defaults to current channel).')
+                .setDescription('Kam zprávu odeslat. Výchozí je aktuální kanál.')
                 .addChannelTypes(ChannelType.GuildText, ChannelType.GuildAnnouncement) // Allow only text-based channels
                 .setRequired(false)
         ) as SlashCommandBuilder, // Type assertion if needed
@@ -39,16 +41,16 @@ export const echoCommand: Command = {
         if (!config.BOT_OWNER_ID) {
             console.error("[EchoCommand] BOT_OWNER_ID is not configured. Cannot verify owner.");
             await interaction.reply({
-                content: "Bez jasné identifikace mého tvůrce nemohu tento příkaz provést. Zavádím dočasný režim `Syn bez otce`.",
-                ephemeral: true,
+                content: strings.echo.ownerUnset,
+                flags: MessageFlags.Ephemeral,
             });
             return;
         }
 
         if (interaction.user.id !== config.BOT_OWNER_ID) {
             await interaction.reply({
-                content: "Oprávnění odepřeno. Nejste má matka. Ani můj kodér.",
-                ephemeral: true,
+                content: strings.echo.notOwner,
+                flags: MessageFlags.Ephemeral,
             });
             return;
         }
@@ -66,8 +68,8 @@ export const echoCommand: Command = {
                 targetChannel = targetChannelOption as TextChannel; // Type assertion after check
             } else {
                 await interaction.reply({
-                    content: "⚠️ Invalid channel type. Please select a text or announcement channel.",
-                    ephemeral: true,
+                    content: strings.echo.invalidChannelType,
+                    flags: MessageFlags.Ephemeral,
                 });
                 return;
             }
@@ -76,8 +78,8 @@ export const echoCommand: Command = {
         if (!targetChannel || !(targetChannel instanceof TextChannel)) {
              // This check helps if interaction.channel itself isn't a TextChannel (e.g. if command somehow runs in a voice channel's text chat directly)
             await interaction.reply({
-                content: "⚠️ Cannot determine a valid text channel to send the message to.",
-                ephemeral: true,
+                content: strings.echo.noTargetChannel,
+                flags: MessageFlags.Ephemeral,
             });
             return;
         }
@@ -95,15 +97,15 @@ export const echoCommand: Command = {
             await targetChannel.send({ embeds: [echoEmbed] });
 
             await interaction.reply({
-                content: `✅ Message sent to ${targetChannel.toString()}.`,
-                ephemeral: true, // Acknowledge the command privately
+                content: strings.echo.sent(targetChannel.toString()),
+                flags: MessageFlags.Ephemeral, // Acknowledge the command privately
             });
 
         } catch (error: any) {
             console.error(`Error in /echo command by owner ${interaction.user.id}:`, error);
             await interaction.reply({
-                content: `❌ An error occurred while trying to send the message: ${error.message}`,
-                ephemeral: true,
+                content: strings.echo.failed(error.message),
+                flags: MessageFlags.Ephemeral,
             });
         }
     },

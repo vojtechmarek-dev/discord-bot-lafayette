@@ -1,9 +1,10 @@
-import { SlashCommandBuilder, ChatInputCommandInteraction, EmbedBuilder } from 'discord.js';
+import { SlashCommandBuilder, ChatInputCommandInteraction, EmbedBuilder, MessageFlags } from 'discord.js';
 import { Command, ExtendedClient } from '../../types';
 import { setCardDeck } from '../../guildStateManager';
 import { createNewShuffledDeckState } from '../../utils/deckUtils';
 import { getDisplayName } from '../../utils/interactionUtils';
 import { getUserRollEmbedColor } from '../../guildSettingsManager';
+import { strings } from '../../strings/cs';
 
 export const shuffleCommand: Command = {
     data: new SlashCommandBuilder()
@@ -18,7 +19,7 @@ export const shuffleCommand: Command = {
         const displayName = getDisplayName(interaction);
 
         if (!interaction.guildId) {
-            await interaction.reply({ content: 'This command can only be used in a server.', ephemeral: true });
+            await interaction.reply({ content: strings.common.guildOnly, flags: MessageFlags.Ephemeral });
             return;
         }
 

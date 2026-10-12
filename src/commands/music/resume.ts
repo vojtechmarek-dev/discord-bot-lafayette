@@ -1,6 +1,7 @@
-import { ChatInputCommandInteraction, SlashCommandBuilder } from "discord.js";
+import { ChatInputCommandInteraction, SlashCommandBuilder, MessageFlags } from "discord.js";
 import { useTimeline } from "discord-player";
 import { Command, ExtendedClient } from "../../types";
+import { strings } from '../../strings/cs';
 
 
 export const resumeCommand: Command = {
@@ -12,7 +13,7 @@ export const resumeCommand: Command = {
     _client: ExtendedClient
   ) {
     if (!interaction.guild) {
-        await interaction.reply({ content: 'This command can only be used in a server.', ephemeral: true });
+        await interaction.reply({ content: strings.common.guildOnly, flags: MessageFlags.Ephemeral });
         return;
     }
 
@@ -31,7 +32,7 @@ export const resumeCommand: Command = {
 
     if (!timeline.paused) {
         await interaction.reply({
-        content: "Obnovit přehrávání? Exceletní nápad! Nicméně... jsem již o krok napřed. Jako vždy.",
+        content: "Obnovit přehrávání? Excelentní nápad! Nicméně... jsem již o krok napřed. Jako vždy.",
         flags: ["Ephemeral"],
       });
       return;

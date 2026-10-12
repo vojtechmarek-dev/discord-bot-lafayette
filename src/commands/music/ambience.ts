@@ -5,6 +5,7 @@ import {
     EmbedBuilder,
     GuildMember,
     ChannelType,
+  MessageFlags,
 } from 'discord.js';
 import { QueryType, QueueRepeatMode, useMainPlayer, useQueue } from 'discord-player';
 import { Command, ExtendedClient } from '../../types';
@@ -56,7 +57,7 @@ export const ambienceCommand: Command = {
 
     async execute(interaction: ChatInputCommandInteraction, _client: ExtendedClient) {
         if (!interaction.guildId) {
-            await interaction.reply({ content: 'Tento příkaz lze použít pouze na serveru.', ephemeral: true });
+            await interaction.reply({ content: 'Tento příkaz lze použít pouze na serveru.', flags: MessageFlags.Ephemeral });
             return;
         }
 
@@ -75,7 +76,7 @@ async function handleList(interaction: ChatInputCommandInteraction): Promise<voi
     const presets = listAmbiencePresets();
 
     if (presets.length === 0) {
-        await interaction.reply({ content: emptyLibraryMessage(), ephemeral: true });
+        await interaction.reply({ content: emptyLibraryMessage(), flags: MessageFlags.Ephemeral });
         return;
     }
 
@@ -85,7 +86,7 @@ async function handleList(interaction: ChatInputCommandInteraction): Promise<voi
         .setDescription(presets.map(preset => `• **${preset.label}** — \`${preset.slug}\``).join('\n'))
         .setFooter({ text: 'Soubory přidává správce do data/ambience. Restart nepotřebuji.' });
 
-    await interaction.reply({ embeds: [embed], ephemeral: true });
+    await interaction.reply({ embeds: [embed], flags: MessageFlags.Ephemeral });
 }
 
 async function handleStop(interaction: ChatInputCommandInteraction): Promise<void> {
@@ -95,7 +96,7 @@ async function handleStop(interaction: ChatInputCommandInteraction): Promise<voi
     if (!queue || queue.deleted || !ambience) {
         await interaction.reply({
             content: '❌ Žádné kulisy neběží. Ticho, které slyšíte, je původní.',
-            ephemeral: true,
+            flags: MessageFlags.Ephemeral,
         });
         return;
     }
@@ -113,19 +114,19 @@ async function handlePlay(interaction: ChatInputCommandInteraction): Promise<voi
     if (!voiceChannel) {
         await interaction.reply({
             content: 'Musíte být v hlasovém kanálu. Nemohu vytvářet atmosféru v prázdném prostoru.',
-            ephemeral: true,
+            flags: MessageFlags.Ephemeral,
         });
         return;
     }
 
     if (voiceChannel.type !== ChannelType.GuildVoice && voiceChannel.type !== ChannelType.GuildStageVoice) {
-        await interaction.reply({ content: 'Umím se připojit jen do hlasového nebo stage kanálu.', ephemeral: true });
+        await interaction.reply({ content: 'Umím se připojit jen do hlasového nebo stage kanálu.', flags: MessageFlags.Ephemeral });
         return;
     }
 
     const presets = listAmbiencePresets();
     if (presets.length === 0) {
-        await interaction.reply({ content: emptyLibraryMessage(), ephemeral: true });
+        await interaction.reply({ content: emptyLibraryMessage(), flags: MessageFlags.Ephemeral });
         return;
     }
 
@@ -137,7 +138,7 @@ async function handlePlay(interaction: ChatInputCommandInteraction): Promise<voi
             content:
                 `❌ Kulisu "${requested}" neznám. K dispozici mám: ` +
                 presets.map(entry => `\`${entry.slug}\``).join(', ') + '.',
-            ephemeral: true,
+            flags: MessageFlags.Ephemeral,
         });
         return;
     }
@@ -153,7 +154,7 @@ async function handlePlay(interaction: ChatInputCommandInteraction): Promise<voi
     if (existingQueue && !existingQueue.deleted && existingQueue.currentTrack && !existingAmbience) {
         await interaction.reply({
             content: '❌ Právě hraje hudba. Kulisy a hudba se o jediný hlasový kanál dělit nedokážou. Vyberte si. Jako dospělí.',
-            ephemeral: true,
+            flags: MessageFlags.Ephemeral,
         });
         return;
     }
@@ -202,7 +203,7 @@ async function handlePlay(interaction: ChatInputCommandInteraction): Promise<voi
         if (interaction.deferred || interaction.replied) {
             await interaction.editReply({ content: message }).catch(() => {});
         } else {
-            await interaction.reply({ content: message, ephemeral: true }).catch(() => {});
+            await interaction.reply({ content: message, flags: MessageFlags.Ephemeral }).catch(() => {});
         }
     }
 }

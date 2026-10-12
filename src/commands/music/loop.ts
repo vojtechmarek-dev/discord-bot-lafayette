@@ -1,4 +1,4 @@
-import { SlashCommandBuilder, ChatInputCommandInteraction } from 'discord.js';
+import { SlashCommandBuilder, ChatInputCommandInteraction, MessageFlags } from 'discord.js';
 import { QueueRepeatMode, useQueue } from 'discord-player';
 import { Command, ExtendedClient } from '../../types';
 
@@ -32,7 +32,7 @@ export const loopCommand: Command = {
 
     async execute(interaction: ChatInputCommandInteraction, _client: ExtendedClient) {
         if (!interaction.guildId) {
-            await interaction.reply({ content: 'Tento příkaz lze použít pouze na serveru.', ephemeral: true });
+            await interaction.reply({ content: 'Tento příkaz lze použít pouze na serveru.', flags: MessageFlags.Ephemeral });
             return;
         }
 
@@ -42,7 +42,7 @@ export const loopCommand: Command = {
         if (!queue || (!queue.currentTrack && queue.tracks.size === 0)) {
             await interaction.reply({
                 content: '❌ Není co opakovat. Ticho se opakuje samo, bez mé pomoci.',
-                ephemeral: true,
+                flags: MessageFlags.Ephemeral,
             });
             return;
         }

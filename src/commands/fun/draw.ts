@@ -1,4 +1,4 @@
-import { SlashCommandBuilder, ChatInputCommandInteraction, EmbedBuilder, ColorResolvable } from 'discord.js';
+import { SlashCommandBuilder, ChatInputCommandInteraction, EmbedBuilder, ColorResolvable, MessageFlags } from 'discord.js';
 import { Card, Command, ExtendedClient } from '../../types';
 import { formatCard, getNewPokerDeck } from '../../utils/deckUtils';
 import { drawCards, getCardDeck } from '../../guildStateManager';
@@ -35,7 +35,7 @@ export const drawCommand: Command = {
         if (outcome.kind === 'empty') {
             await interaction.reply({
                 content: 'Balíček je prázdný. Věřte mi, zkoušel jsem i kouzla – nefungují',
-                ephemeral: true,
+                flags: MessageFlags.Ephemeral,
             });
             return;
         }
@@ -43,7 +43,7 @@ export const drawCommand: Command = {
         if (outcome.kind === 'tooMany') {
             await interaction.reply({
                 content: `Chcete ${countToDraw} karet, ale jen ${outcome.remaining} zbývá? No tedy! Doporučuji kariéru v účetnictví řádu.`,
-                ephemeral: true,
+                flags: MessageFlags.Ephemeral,
             });
             return;
         }

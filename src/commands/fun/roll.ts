@@ -1,4 +1,4 @@
-import { SlashCommandBuilder, ChatInputCommandInteraction, EmbedBuilder, ColorResolvable } from 'discord.js';
+import { SlashCommandBuilder, ChatInputCommandInteraction, EmbedBuilder, ColorResolvable, MessageFlags } from 'discord.js';
 import { DiceRoll, Parser } from '@dice-roller/rpg-dice-roller';
 import { Command, ExtendedClient } from '../../types';
 import { FudgeDice, PercentileDice, StandardDice } from '@dice-roller/rpg-dice-roller/types/dice';
@@ -165,7 +165,7 @@ export const rollCommand: Command = {
             const notationsToRoll = splitDiceNotations(diceNotationInput);
 
             if (hasTooManyNotations(notationsToRoll)) { // Limit number of multiple rolls
-                await interaction.reply({ content: 'Zadrž kovboji! Můžete požádat pouze o 5 sad házení! Vypadám snad, že těch kostek mám po kaspách tolik?.', ephemeral: true });
+                await interaction.reply({ content: 'Zadržte, kovboji! Můžete požádat pouze o 5 sad házení! Vypadám snad, že těch kostek mám po kapsách tolik?', flags: MessageFlags.Ephemeral });
                 return;
             }
 
@@ -207,7 +207,7 @@ export const rollCommand: Command = {
         } catch (error: any) {
             console.error(`Error during dice roll with input "${diceNotationInput}":`, error);
             const errorMessage = formatErrorDiceNotation(error, diceNotationInput);
-            await interaction.reply({ content: errorMessage, ephemeral: true });
+            await interaction.reply({ content: errorMessage, flags: MessageFlags.Ephemeral });
         }
     },
 };
@@ -246,7 +246,7 @@ async function executeAdvDisRoll(interaction: ChatInputCommandInteraction, advan
     } catch (error: any) {
         console.error(`Error during dice roll with input "${diceNotation}":`, error);
         const errorMessage = formatErrorDiceNotation(error, diceNotation);
-        await interaction.reply({ content: errorMessage, ephemeral: true });
+        await interaction.reply({ content: errorMessage, flags: MessageFlags.Ephemeral });
     }
 }
 
