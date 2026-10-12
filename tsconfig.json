@@ -117,6 +117,6 @@
   },
   // Typecheck everything CI can break, not just src/: deploy-commands.ts runs on
   // pushes to `release`, and the test suite was previously unchecked entirely.
-  "include": ["src/**/*", "test/**/*", "deploy-commands.ts"],
+  "include": ["src/**/*", "test/**/*", "scripts/**/*", "deploy-commands.ts"],
   "exclude": ["node_modules", "dist"]
 }

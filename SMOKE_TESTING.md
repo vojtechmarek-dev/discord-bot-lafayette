@@ -6,11 +6,30 @@ This repository now includes a canary smoke test scaffold for Discord voice + me
 
 The canary verifies:
 
-- canary bot can log in
-- canary bot can resolve a playback query
-- canary bot can join the configured voice channel
-- `discord-player` emits `playerStart`
-- **the queue actually decodes at least 3000 ms of audio**
+The canary runs the bot's own pipeline - the same extractor registration, query
+router, playback watchdog and audio thresholds - rather than a parallel copy. An
+earlier version duplicated all of that with its own constants, so it could pass
+while production was broken: production accepted 500 ms of audio while the canary
+demanded 3000 ms, which meant the two were testing different bots.
+
+It exercises four legs, each of which logs in, joins the voice channel, plays,
+and asserts at least 3000 ms of genuinely decoded audio:
+
+| Leg | Gates the build? | Why |
+|---|---|---|
+| `attachment` | **yes** | A WAV generated in-process. Depends on no network, no CDN and no third party, so a red here is always our bug. |
+| `soundcloud` | **yes** | Works from datacenter IPs, needs no PO token. |
+| `bridge` | no | Asserts a Spotify link bridges to the **YouTube** extractor, so it inherits YouTube's IP problem. |
+| `youtube` | no | GitHub runners are datacenter IPs and YouTube rates them harshly. |
+
+The two informational legs still run and still report - "did YouTube break
+again?" is worth asking weekly - they just do not fail the build. A check that
+reddens for reasons unrelated to the code is not a gate; it is noise that trains
+you to ignore CI.
+
+The bridge wiring is gated offline instead, by `test/extractor-contract.test.ts`,
+which asserts YouTube defines its own `bridge()` and outranks SoundCloud. That is
+how the regression actually happens, and it fails on every PR rather than weekly.
 
 ### Why the audio assertion matters
 
@@ -34,7 +53,7 @@ This is designed to catch breakages from frequent dependency updates in:
 ## Files
 
 - Workflow: `.github/workflows/smoke-canary.yml`
-- Script: `scripts/smoke-canary.mjs`
+- Script: `scripts/smoke-canary.ts` (run through `tsx`, so it imports from `src/`)
 - NPM script: `npm run smoke:canary`
 
 ## Required GitHub Secrets
@@ -45,7 +64,9 @@ Add these to repository settings:
 - `CANARY_GUILD_ID`: test guild/server ID
 - `CANARY_VOICE_CHANNEL_ID`: voice channel ID used for smoke runs
 - `CANARY_TEXT_CHANNEL_ID`: optional text channel ID for pass/fail notifications
-- `CANARY_QUERY`: media query/URL for playback (optional, defaults in script)
+- `CANARY_SOUNDCLOUD_QUERY`: optional override for the SoundCloud leg
+- `CANARY_SPOTIFY_URL`: optional override for the bridge leg
+- `CANARY_YOUTUBE_QUERY`: optional override for the YouTube leg
 - `DP_FFMPEG_PATH`: optional, only if your environment requires custom ffmpeg path
 
 ## First Run
@@ -65,6 +86,8 @@ Add these to repository settings:
 - Use a dedicated canary guild/channel to avoid user-facing disruption.
 - Workflow concurrency is enabled to keep only one active canary run per PR/ref.
 - Aborted/cancelled runs do not post failure messages to `CANARY_TEXT_CHANNEL_ID`.
+- Every run uploads `smoke-report.json` as an artifact: per-leg status, decoded
+  audio in ms, which extractor bridged, and any stream diagnosis.
 
 ## Known limitation: runner egress IP
 

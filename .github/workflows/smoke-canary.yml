@@ -65,15 +65,31 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
+      # The canary exits non-zero only when a REQUIRED leg fails. The YouTube
+      # and bridge legs are informational: GitHub runners are datacenter IPs
+      # and YouTube rates them harshly, so those go red for reasons unrelated
+      # to this repository. Their wiring is gated offline instead, by
+      # test/extractor-contract.test.ts on every PR.
       - name: Run voice/media smoke canary
         env:
           DISCORD_TOKEN_CANARY: ${{ secrets.DISCORD_TOKEN_CANARY }}
           CANARY_GUILD_ID: ${{ secrets.CANARY_GUILD_ID }}
           CANARY_VOICE_CHANNEL_ID: ${{ secrets.CANARY_VOICE_CHANNEL_ID }}
           CANARY_TEXT_CHANNEL_ID: ${{ secrets.CANARY_TEXT_CHANNEL_ID }}
-          CANARY_QUERY: ${{ secrets.CANARY_QUERY }}
+          CANARY_SOUNDCLOUD_QUERY: ${{ secrets.CANARY_SOUNDCLOUD_QUERY }}
+          CANARY_SPOTIFY_URL: ${{ secrets.CANARY_SPOTIFY_URL }}
+          CANARY_YOUTUBE_QUERY: ${{ secrets.CANARY_YOUTUBE_QUERY }}
           DP_FFMPEG_PATH: ${{ secrets.DP_FFMPEG_PATH }}
+          SMOKE_REPORT_PATH: smoke-report.json
         run: npm run smoke:canary
+
+      - name: Upload smoke report
+        if: ${{ always() }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: smoke-report
+          path: smoke-report.json
+          if-no-files-found: warn
 
   smoke-canary-required:
     name: Smoke Canary Required
