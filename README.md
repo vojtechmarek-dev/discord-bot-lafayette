@@ -214,6 +214,31 @@ the bot rescans the directory on every command, so no restart is needed either.
   song. Starting it while music plays is refused rather than silently stopping the music.
 - This path touches no extractor, so it keeps working during a YouTube outage.
 
+## Source Health
+
+YouTube extraction cannot be meaningfully tested from CI: GitHub-hosted runners
+are datacenter IPs and YouTube rates them harshly, so the canary only ever
+verifies our wiring. The bot's own host has the residential IP that matters, so
+the end-to-end check lives here instead.
+
+Two parts:
+
+1. **Periodic probe.** Every `LAFAYETTE_PROBE_INTERVAL_MS` (6h by default) the
+   bot resolves a known track per source and pulls 64 KiB straight off the
+   extractor. No voice connection is involved and nothing is played, so it makes
+   no noise. This reproduces the real failure mode: the SABR extractor returns a
+   stream before fetching any segment, so a 403 or a refused PO token shows up
+   as a stream that ends with zero bytes.
+2. **Real playback outcomes.** Every confirmed or stalled track updates the same
+   state, so a user hitting a broken source is itself a signal between probes.
+
+A source is marked degraded after three consecutive failures - one dead video or
+a typo is not an outage - and only **state changes** are reported, never
+individual failures. Set `LAFAYETTE_HEALTH_CHANNEL_ID` to get those as Discord
+messages; without it they are logged only.
+
+Livestreams are skipped when probing: they have no finite body to sample, so
+SabrStream stalls and aborts, which would look like a permanent outage.
 ## Background Jobs
 
 - Card deck cleanup runs on bot ready and then every 6 hours by default.

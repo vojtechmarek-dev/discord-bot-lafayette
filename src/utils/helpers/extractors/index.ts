@@ -1,3 +1,4 @@
+import type { AudioSource } from '../queryRouter';
 export { UrlOnlySoundcloudExtractor, UrlOnlySpotifyExtractor } from './urlOnlyExtractors';
 export { BridgingYoutubeSabrExtractor } from './bridgingYoutubeSabrExtractor';
 
@@ -34,3 +35,14 @@ export const EXTRACTOR_PRIORITIES = {
     // 'arbitrary'/'file' queries and should never outrank a real source.
     attachment: 0,
 } as const;
+
+/** Maps a registered extractor id back to the audio source it represents. */
+export function sourceFromExtractorId(identifier: string | null | undefined): AudioSource | null {
+    switch (identifier) {
+        case EXTRACTOR_IDS.youtube: return 'youtube';
+        case EXTRACTOR_IDS.soundcloud: return 'soundcloud';
+        case EXTRACTOR_IDS.spotify: return 'spotify';
+        case EXTRACTOR_IDS.attachment: return 'attachment';
+        default: return null;
+    }
+}

@@ -16,6 +16,10 @@ services:
       - LAFAYETTE_DATA_DIR=/usr/src/app/data
       # WAL needs working POSIX locking; set TRUNCATE if bot_data ever moves to NFS/SMB.
       - LAFAYETTE_SQLITE_JOURNAL_MODE=${LAFAYETTE_SQLITE_JOURNAL_MODE:-WAL}
+      # Optional channel for source-health notices; logs only when unset.
+      - LAFAYETTE_HEALTH_CHANNEL_ID=${LAFAYETTE_HEALTH_CHANNEL_ID:-}
+      # End-to-end source probe interval in ms. 0 disables it.
+      - LAFAYETTE_PROBE_INTERVAL_MS=${LAFAYETTE_PROBE_INTERVAL_MS:-21600000}
     volumes:
       - ./bot_data:/usr/src/app/data  # persistent storage for bot data - make sure to set proper permissions
 

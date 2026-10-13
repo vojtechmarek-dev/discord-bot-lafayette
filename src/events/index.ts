@@ -6,6 +6,7 @@ import { readyEvent } from './ready';
 import { interactionCreateEvent } from './interactionCreate';
 import { BotEvent } from '../types';
 import { registerPlayerEvents } from './player';
+import { startSourceMonitor } from '../utils/helpers/sourceMonitor';
 
 const allEvents: BotEvent[] = [
     readyEvent,
@@ -30,6 +31,10 @@ export function registerEvents(client: Client, player: Player | null): void {
     if (player) {
         registerPlayerEvents(player);
     }
+
+    // Periodic end-to-end check from production, which is the only host with
+    // the residential IP that makes a YouTube result meaningful.
+    startSourceMonitor(client, player);
 }
 
 export { announce, resolveChannel } from './player/announce';

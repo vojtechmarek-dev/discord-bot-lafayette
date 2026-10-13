@@ -3,6 +3,8 @@ import { confirmPlayback } from '../../utils/helpers/playbackWatchdog';
 import { CONFIRM_TIMEOUT_MS, MIN_REAL_AUDIO_MS } from '../../utils/helpers/playbackThresholds';
 import { defaultStreamFailureMessage, diagnoseStreamFailure } from '../../utils/helpers/streamDiagnostics';
 import { getAmbienceState } from '../../utils/helpers/queueFactory';
+import { sourceFromExtractorId } from '../../utils/helpers/extractors';
+import { recordPlaybackOutcome } from '../../utils/helpers/sourceMonitor';
 import { announce } from './announce';
 
 /**
@@ -32,7 +34,16 @@ export async function handlePlayerStart(queue: GuildQueue, track: Track): Promis
 
     const result = await confirmPlayback(queue, track);
 
+    // Credit the extractor that actually supplied the audio: for a bridged
+    // Spotify track that is YouTube, not Spotify.
+    const source = sourceFromExtractorId(
+        track.bridgedExtractor?.identifier ?? track.extractor?.identifier,
+    );
+
     if (result.confirmed) {
+        if (source) {
+            recordPlaybackOutcome(queue.player.client, source, true);
+        }
         await announce(queue, `▶️ Zvuková sekvence inicializována: **${track.title}** od ${track.author}!`);
         return;
     }
@@ -57,6 +68,10 @@ export async function handlePlayerStart(queue: GuildQueue, track: Track): Promis
     // nothing used to read - so this log said "source likely rejected the stream"
     // while the actual reason sat one property away.
     const diagnosis = diagnoseStreamFailure(track.metadata);
+
+    if (source) {
+        recordPlaybackOutcome(queue.player.client, source, false, diagnosis?.kind);
+    }
 
     console.error(
         `[Player] No audio after ${CONFIRM_TIMEOUT_MS}ms for ${track.title} (${track.url}); ` +
