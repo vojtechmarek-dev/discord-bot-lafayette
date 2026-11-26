@@ -1,5 +1,5 @@
 # Stage 1: Builder
-FROM node:24-slim AS builder
+FROM node:26-slim AS builder
 WORKDIR /usr/src/app
 
 # No build toolchain needed. The whole cairo/pango/librsvg stack was here only
@@ -22,7 +22,7 @@ RUN npm prune --omit=dev
 RUN ls -la dist/
 
 # Stage 2: Production image
-FROM node:24-slim AS production
+FROM node:26-slim AS production
 WORKDIR /usr/src/app
 
 # Runtime libraries. ffmpeg is required by discord-player for transcoding.
